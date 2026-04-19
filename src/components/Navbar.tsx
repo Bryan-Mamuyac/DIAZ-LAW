@@ -3,66 +3,65 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { Sun, Moon, Menu, X, Scale } from 'lucide-react'
+import { Sun, Moon, Menu, X } from 'lucide-react'
 import { useTheme } from './ThemeProvider'
 
-const navLinks = [
-  { href: '/', label: 'Home' },
+const NAV = [
+  { href: '/',            label: 'Home' },
   { href: '/appointment', label: 'Appointment' },
-  { href: '/contact', label: 'Contact' },
-  { href: '/about', label: 'About' },
+  { href: '/contact',     label: 'Contact' },
+  { href: '/about',       label: 'About' },
 ]
 
 export function Navbar() {
-  const pathname = usePathname()
-  const { theme, toggle } = useTheme()
-  const [menuOpen, setMenuOpen] = useState(false)
+  const pathname           = usePathname()
+  const { theme, toggle }  = useTheme()
+  const [open,     setOpen]     = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
+  const onHero = pathname === '/'
+
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20)
-    window.addEventListener('scroll', onScroll)
-    return () => window.removeEventListener('scroll', onScroll)
+    const fn = () => setScrolled(window.scrollY > 32)
+    fn()
+    window.addEventListener('scroll', fn, { passive: true })
+    return () => window.removeEventListener('scroll', fn)
   }, [])
 
-  useEffect(() => setMenuOpen(false), [pathname])
+  useEffect(() => setOpen(false), [pathname])
+
+  const isTransparent = onHero && !scrolled
 
   return (
     <header
-      style={{
-        backgroundColor: scrolled ? 'var(--bg-card)' : 'transparent',
-        borderBottom: scrolled ? '1px solid var(--border)' : '1px solid transparent',
-        backdropFilter: scrolled ? 'blur(12px)' : 'none',
-      }}
-      className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+      className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
+        scrolled ? 'nav-scrolled' : 'nav-top'
+      } ${isTransparent ? 'nav-hero' : ''}`}
     >
-      <div className="section-container">
-        <div className="flex items-center justify-between h-16">
+      <div className="container-site">
+        <div className="flex items-center justify-between h-[68px]">
+
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: 'var(--navy-accent)' }}
-            >
-              <Scale size={18} className="text-white" />
-            </div>
-            <div className="leading-tight">
-              <span className="font-display font-bold text-base block" style={{ color: 'var(--text-primary)' }}>
-                DIAZ LAW
-              </span>
-              <span className="text-xs block" style={{ color: 'var(--text-muted)' }}>
-                Lawyer & Notary Public
-              </span>
-            </div>
+          <Link href="/" className="flex-shrink-0">
+            {/* Light mode logo */}
+            <img
+              src="/images/DiazLogo.png"
+              alt="Diaz Law Office"
+              className="h-10 w-auto object-contain"
+              style={{
+                filter: isTransparent ? 'brightness(0) invert(1)' : 'none',
+                transition: 'filter 0.3s ease',
+              }}
+            />
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-1">
-            {navLinks.map(({ href, label }) => (
+          <nav className="hidden md:flex items-center gap-8">
+            {NAV.map(({ href, label }) => (
               <Link
                 key={href}
                 href={href}
-                className={`nav-link ${pathname === href ? 'active' : ''}`}
+                className={`nav-link-lux ${pathname === href ? 'active' : ''}`}
               >
                 {label}
               </Link>
@@ -70,62 +69,65 @@ export function Navbar() {
           </nav>
 
           {/* Right controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button
               onClick={toggle}
-              className="w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200"
-              style={{
-                backgroundColor: 'var(--bg-secondary)',
-                border: '1px solid var(--border)',
-                color: 'var(--text-muted)',
-              }}
               aria-label="Toggle theme"
+              className="w-9 h-9 rounded-md flex items-center justify-center transition-all duration-200"
+              style={{
+                background: isTransparent ? 'rgba(237,232,222,0.1)' : 'var(--bg-raised)',
+                border: '1px solid',
+                borderColor: isTransparent ? 'rgba(237,232,222,0.18)' : 'var(--border)',
+                color: isTransparent ? 'rgba(237,232,222,0.75)' : 'var(--text-muted)',
+              }}
             >
-              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+              {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
             </button>
 
-            <Link
-              href="/appointment"
-              className="hidden md:block btn-primary text-sm py-2 px-4"
-            >
+            <Link href="/appointment" className="hidden md:inline-flex btn-gold text-xs py-2.5 px-5">
               Book Now
             </Link>
 
-            {/* Mobile hamburger */}
             <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="md:hidden w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200"
+              onClick={() => setOpen(!open)}
+              aria-label="Menu"
+              className="md:hidden w-9 h-9 rounded-md flex items-center justify-center transition-all"
               style={{
-                backgroundColor: 'var(--bg-secondary)',
-                border: '1px solid var(--border)',
-                color: 'var(--text-muted)',
+                background: isTransparent ? 'rgba(237,232,222,0.1)' : 'var(--bg-raised)',
+                border: '1px solid',
+                borderColor: isTransparent ? 'rgba(237,232,222,0.18)' : 'var(--border)',
+                color: isTransparent ? 'rgba(237,232,222,0.8)' : 'var(--text-muted)',
               }}
-              aria-label="Toggle menu"
             >
-              {menuOpen ? <X size={18} /> : <Menu size={18} />}
+              {open ? <X size={17} /> : <Menu size={17} />}
             </button>
           </div>
         </div>
       </div>
 
       {/* Mobile menu */}
-      {menuOpen && (
+      {open && (
         <div
           className="md:hidden border-t"
-          style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}
+          style={{ background: 'var(--bg-surface)', borderColor: 'var(--border)' }}
         >
-          <div className="section-container py-4 flex flex-col gap-1">
-            {navLinks.map(({ href, label }) => (
+          <div className="container-site py-5 space-y-1">
+            {NAV.map(({ href, label }) => (
               <Link
                 key={href}
                 href={href}
-                className={`nav-link block py-3 text-base ${pathname === href ? 'active' : ''}`}
+                className="block py-3 text-sm font-medium transition-colors"
+                style={{
+                  color: pathname === href ? 'var(--gold)' : 'var(--text-secondary)',
+                  borderBottom: '1px solid var(--border)',
+                  fontFamily: "'DM Sans', sans-serif",
+                }}
               >
                 {label}
               </Link>
             ))}
-            <div className="pt-2 border-t mt-2" style={{ borderColor: 'var(--border)' }}>
-              <Link href="/appointment" className="btn-primary block text-center text-sm py-3">
+            <div className="pt-4">
+              <Link href="/appointment" className="btn-gold w-full justify-center text-xs py-3">
                 Book an Appointment
               </Link>
             </div>

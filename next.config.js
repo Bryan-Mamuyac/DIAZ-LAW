@@ -1,3 +1,5 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {}
+const nextConfig = {
+  // Make Assets/images available as /images/* in public
+}
 module.exports = nextConfig

@@ -1,42 +1,78 @@
 import Link from 'next/link'
-import { Scale, Facebook, Phone, Mail, MapPin } from 'lucide-react'
+import { Phone, Mail, Facebook } from 'lucide-react'
 
 export function Footer() {
+  const year = new Date().getFullYear()
+
   return (
-    <footer
-      className="mt-24 border-t"
-      style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}
-    >
-      <div className="section-container py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+    <footer style={{ background: 'var(--bg-inset)', borderTop: '1px solid var(--border)' }}>
+      <div className="container-site py-16">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12">
+
           {/* Brand */}
-          <div>
-            <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'var(--navy-accent)' }}>
-                <Scale size={18} className="text-white" />
-              </div>
-              <div>
-                <span className="font-display font-bold text-base block" style={{ color: 'var(--text-primary)' }}>DIAZ LAW</span>
-                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Lawyer & Notary Public</span>
-              </div>
-            </div>
-            <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-              Providing trusted legal counsel and notarial services. Your rights. Our priority.
+          <div className="md:col-span-5">
+            <img
+              src="/images/DiazLogo.png"
+              alt="Diaz Law Office"
+              className="h-11 w-auto object-contain mb-5"
+            />
+            <p className="text-sm leading-relaxed max-w-xs" style={{ color: 'var(--text-muted)', fontWeight: 300 }}>
+              Trusted legal counsel and notarial services for individuals and businesses.
+              Your rights. Our commitment.
             </p>
+            <div className="rule-gold max-w-[100px] mt-6" />
+            <div className="flex items-center gap-3 mt-5">
+              {[
+                { href: 'tel:09952638355',                              Icon: Phone   },
+                { href: 'mailto:jushuamari@gmail.com',                  Icon: Mail    },
+                { href: 'https://www.facebook.com/jushuamari.diaz',     Icon: Facebook },
+              ].map(({ href, Icon }) => (
+                <a
+                  key={href}
+                  href={href}
+                  target={href.startsWith('http') ? '_blank' : undefined}
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-md flex items-center justify-center transition-all duration-200 group"
+                  style={{ border: '1px solid var(--border-strong)', color: 'var(--text-muted)' }}
+                  onMouseEnter={e => {
+                    const el = e.currentTarget as HTMLAnchorElement
+                    el.style.borderColor = 'var(--gold)'
+                    el.style.color       = 'var(--gold)'
+                    el.style.background  = 'var(--gold-pale)'
+                  }}
+                  onMouseLeave={e => {
+                    const el = e.currentTarget as HTMLAnchorElement
+                    el.style.borderColor = 'var(--border-strong)'
+                    el.style.color       = 'var(--text-muted)'
+                    el.style.background  = 'transparent'
+                  }}
+                >
+                  <Icon size={14} />
+                </a>
+              ))}
+            </div>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h4 className="font-display font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Quick Links</h4>
-            <ul className="space-y-2">
+          {/* Nav links */}
+          <div className="md:col-span-3 md:col-start-7">
+            <p className="font-mono-dm text-xs tracking-widest uppercase mb-5" style={{ color: 'var(--gold)' }}>
+              Navigation
+            </p>
+            <ul className="space-y-3">
               {[
-                { href: '/', label: 'Home' },
-                { href: '/appointment', label: 'Book an Appointment' },
-                { href: '/contact', label: 'Contact Us' },
-                { href: '/about', label: 'About Atty. Diaz' },
-              ].map(({ href, label }) => (
+                ['/', 'Home'],
+                ['/appointment', 'Book Appointment'],
+                ['/contact', 'Contact'],
+                ['/about', 'About Atty. Diaz'],
+              ].map(([href, label]) => (
                 <li key={href}>
-                  <Link href={href} className="text-sm transition-colors hover:underline" style={{ color: 'var(--text-muted)' }}>
+                  <Link
+                    href={href}
+                    className="text-sm transition-colors"
+                    style={{ color: 'var(--text-muted)', textDecoration: 'none' }}
+                    onMouseEnter={e => ((e.currentTarget as HTMLAnchorElement).style.color = 'var(--gold)')}
+                    onMouseLeave={e => ((e.currentTarget as HTMLAnchorElement).style.color = 'var(--text-muted)')}
+                  >
                     {label}
                   </Link>
                 </li>
@@ -45,32 +81,42 @@ export function Footer() {
           </div>
 
           {/* Contact */}
-          <div>
-            <h4 className="font-display font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Get in Touch</h4>
+          <div className="md:col-span-3">
+            <p className="font-mono-dm text-xs tracking-widest uppercase mb-5" style={{ color: 'var(--gold)' }}>
+              Contact
+            </p>
             <ul className="space-y-3">
-              <li className="flex items-center gap-2.5 text-sm" style={{ color: 'var(--text-muted)' }}>
-                <Phone size={15} style={{ color: 'var(--navy-accent)' }} />
-                <a href="tel:09952638355" className="hover:underline">0995 263 8355</a>
-              </li>
-              <li className="flex items-center gap-2.5 text-sm" style={{ color: 'var(--text-muted)' }}>
-                <Mail size={15} style={{ color: 'var(--navy-accent)' }} />
-                <a href="mailto:jushuamari@gmail.com" className="hover:underline">jushuamari@gmail.com</a>
-              </li>
-              <li className="flex items-center gap-2.5 text-sm" style={{ color: 'var(--text-muted)' }}>
-                <Facebook size={15} style={{ color: 'var(--navy-accent)' }} />
-                <a href="https://www.facebook.com/jushuamari.diaz" target="_blank" rel="noopener noreferrer" className="hover:underline">
-                  Facebook — Private Concerns
-                </a>
-              </li>
+              {[
+                { href: 'tel:09952638355',                           Icon: Phone,    label: '0995 263 8355' },
+                { href: 'mailto:jushuamari@gmail.com',               Icon: Mail,     label: 'jushuamari@gmail.com' },
+                { href: 'https://www.facebook.com/jushuamari.diaz',  Icon: Facebook, label: 'Facebook — Private Concerns' },
+              ].map(({ href, Icon, label }) => (
+                <li key={href}>
+                  <a
+                    href={href}
+                    target={href.startsWith('http') ? '_blank' : undefined}
+                    rel="noopener noreferrer"
+                    className="text-sm flex items-center gap-2 transition-colors"
+                    style={{ color: 'var(--text-muted)', textDecoration: 'none' }}
+                  >
+                    <Icon size={13} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                    {label}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
         </div>
 
-        <div className="gold-divider" />
+        <div className="rule-gold mt-12" />
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs" style={{ color: 'var(--text-muted)' }}>
-          <span>© {new Date().getFullYear()} DIAZ LAW. All rights reserved.</span>
-          <span>Atty. Jushua Mari Lumague Diaz · Private Practitioner</span>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-6">
+          <p className="font-mono-dm text-xs" style={{ color: 'var(--text-faint)' }}>
+            © {year} DIAZ LAW OFFICE. All rights reserved.
+          </p>
+          <p className="font-mono-dm text-xs" style={{ color: 'var(--text-faint)' }}>
+            Atty. Jushua Mari Lumague Diaz · Private Practitioner
+          </p>
         </div>
       </div>
     </footer>

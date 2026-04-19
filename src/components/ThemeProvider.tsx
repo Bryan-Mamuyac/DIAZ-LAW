@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 
 type Theme = 'light' | 'dark'
+
 const ThemeContext = createContext<{ theme: Theme; toggle: () => void }>({
   theme: 'light',
   toggle: () => {},
@@ -14,23 +15,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true)
-    const saved = localStorage.getItem('theme') as Theme
-    const preferred = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-    setTheme(preferred)
-    document.documentElement.classList.toggle('dark', preferred === 'dark')
+    const saved = localStorage.getItem('diazlaw-theme') as Theme | null
+    const resolved: Theme = saved === 'dark' ? 'dark' : 'light'
+    setTheme(resolved)
+    document.documentElement.classList.toggle('dark', resolved === 'dark')
   }, [])
 
   const toggle = () => {
-    const next = theme === 'light' ? 'dark' : 'light'
+    const next: Theme = theme === 'light' ? 'dark' : 'light'
     setTheme(next)
-    localStorage.setItem('theme', next)
+    localStorage.setItem('diazlaw-theme', next)
     document.documentElement.classList.toggle('dark', next === 'dark')
   }
 
-  if (!mounted) return <>{children}</>
-
   return (
-    <ThemeContext.Provider value={{ theme, toggle }}>
+    <ThemeContext.Provider value={{ theme: mounted ? theme : 'light', toggle }}>
       {children}
     </ThemeContext.Provider>
   )
