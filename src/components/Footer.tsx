@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Phone, Mail, Facebook } from 'lucide-react'
+import { Phone, Mail, Facebook, MapPin, Clock } from 'lucide-react'
 
 export function Footer() {
   const year = new Date().getFullYear()
@@ -22,7 +22,7 @@ export function Footer() {
             </p>
             <div className="rule-gold max-w-[100px] mt-6" />
             <div className="flex items-center gap-3 mt-5">
-              <a href="tel:09952638355" className="footer-icon-btn">
+              <a href="tel:09953622071" className="footer-icon-btn">
                 <Phone size={14} />
               </a>
               <a href="mailto:jushuamari@gmail.com" className="footer-icon-btn">
@@ -60,21 +60,21 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Contact & Hours */}
           <div className="md:col-span-3">
             <p className="font-mono-dm text-xs tracking-widest uppercase mb-5" style={{ color: 'var(--gold)' }}>
-              Contact
+              Contact & Hours
             </p>
             <ul className="space-y-3">
               <li>
-                <a href="tel:09952638355" className="footer-link flex items-center gap-2">
-                  <Phone size={13} style={{ color: 'var(--gold)', flexShrink: 0 }} />
-                  0995 263 8355
+                <a href="tel:09953622071" className="footer-link flex items-start gap-2">
+                  <Phone size={13} style={{ color: 'var(--gold)', flexShrink: 0, marginTop: '2px' }} />
+                  0995 362 2071
                 </a>
               </li>
               <li>
-                <a href="mailto:jushuamari@gmail.com" className="footer-link flex items-center gap-2">
-                  <Mail size={13} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                <a href="mailto:jushuamari@gmail.com" className="footer-link flex items-start gap-2">
+                  <Mail size={13} style={{ color: 'var(--gold)', flexShrink: 0, marginTop: '2px' }} />
                   jushuamari@gmail.com
                 </a>
               </li>
@@ -83,11 +83,19 @@ export function Footer() {
                   href="https://www.facebook.com/jushuamari.diaz"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="footer-link flex items-center gap-2"
+                  className="footer-link flex items-start gap-2"
                 >
-                  <Facebook size={13} style={{ color: 'var(--gold)', flexShrink: 0 }} />
+                  <Facebook size={13} style={{ color: 'var(--gold)', flexShrink: 0, marginTop: '2px' }} />
                   Facebook — Private Concerns
                 </a>
+              </li>
+              <li className="flex items-start gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+                <Clock size={13} style={{ color: 'var(--gold)', flexShrink: 0, marginTop: '2px' }} />
+                <span>Mon – Fri &nbsp;·&nbsp; 8:00 AM – 5:00 PM</span>
+              </li>
+              <li className="flex items-start gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+                <MapPin size={13} style={{ color: 'var(--gold)', flexShrink: 0, marginTop: '2px' }} />
+                <span>2nd Floor, 7-Eleven Building,<br />Aringay, 2503 La Union</span>
               </li>
             </ul>
           </div>

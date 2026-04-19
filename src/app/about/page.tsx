@@ -125,11 +125,11 @@ export default function AboutPage() {
                   Contact
                 </p>
                 <a
-                  href="tel:09952638355"
+                  href="tel:09953622071"
                   className="footer-link flex items-center gap-3"
                 >
                   <Phone size={14} style={{ color: 'var(--gold)', flexShrink: 0 }} />
-                  0995 263 8355
+                  0995 362 2071
                 </a>
                 <a
                   href="mailto:jushuamari@gmail.com"

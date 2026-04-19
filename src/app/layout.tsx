@@ -7,7 +7,12 @@ import { Toaster } from 'react-hot-toast'
 export const metadata: Metadata = {
   title: 'DIAZ LAW | Lawyer and Notary Public',
   description: 'Professional legal and notarial services by Atty. Jushua Mari Lumague Diaz. Book an appointment online.',
-  keywords: 'lawyer, notary public, legal services, Philippines, Diaz Law',
+  keywords: 'lawyer, notary public, legal services, Philippines, Diaz Law, Aringay, La Union',
+  icons: {
+    icon: '/favicon.svg',
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

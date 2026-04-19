@@ -104,7 +104,8 @@ function DatePicker({
 
   const isDisabled = (d: Date) => {
     const t = new Date(); t.setHours(0,0,0,0)
-    return d < t || d.getDay() === 0 // disable past + Sundays
+    const day = d.getDay()
+    return d < t || day === 0 || day === 6 // disable past + Sat + Sun
   }
 
   const fmt = (d: Date) =>
@@ -208,7 +209,7 @@ function DatePicker({
 
           <div className="px-3 pb-3">
             <p className="font-mono-dm text-center" style={{ fontSize: '0.6rem', color: 'var(--text-faint)', letterSpacing: '0.1em' }}>
-              MON – SAT ONLY · SUNDAYS UNAVAILABLE
+              MON – FRI ONLY · WEEKENDS UNAVAILABLE
             </p>
           </div>
         </div>
@@ -300,8 +301,8 @@ export default function AppointmentPage() {
           </p>
           <p className="text-sm mb-8" style={{ color: 'var(--text-muted)' }}>
             For urgent matters, call{' '}
-            <a href="tel:09952638355" className="font-semibold" style={{ color: 'var(--gold)' }}>
-              0995 263 8355
+            <a href="tel:09953622071" className="font-semibold" style={{ color: 'var(--gold)' }}>
+              0995 362 2071
             </a>
           </p>
           <button onClick={() => setSuccess(false)} className="btn-gold w-full justify-center">
@@ -403,7 +404,7 @@ export default function AppointmentPage() {
                 />
                 {errors.appointment_date && <p className="text-red-500 text-xs mt-1.5">{errors.appointment_date}</p>}
                 <p className="text-xs mt-1.5" style={{ color: 'var(--text-faint)' }}>
-                  Office hours: Monday – Saturday. Sundays unavailable.
+                  Office hours: Monday – Friday only. Weekends unavailable.
                 </p>
               </div>
 

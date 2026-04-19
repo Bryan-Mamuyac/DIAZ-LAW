@@ -16,9 +16,9 @@ const CHANNELS = [
   {
     icon: Phone,
     label: 'Phone / Viber',
-    value: '0995 263 8355',
-    sub: 'Mon – Sat · 8AM – 6PM',
-    href: 'tel:09952638355',
+    value: '0995 362 2071',
+    sub: 'Mon – Fri · 8:00 AM – 5:00 PM',
+    href: 'tel:09953622071',
   },
   {
     icon: Mail,

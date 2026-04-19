@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
-import { ArrowRight, Scale, FileText, Users, Briefcase, Phone, CheckCircle } from 'lucide-react'
+import { ArrowRight, Scale, FileText, Users, Briefcase, Phone, CheckCircle, MapPin as MapPinIcon, Clock as ClockIcon, Phone as PhoneIcon } from 'lucide-react'
 import { Footer } from '@/components/Footer'
 
 const SERVICES = [
@@ -84,7 +84,7 @@ export default function HomePage() {
               {[
                 'Honest, transparent advice',
                 'Strict client confidentiality',
-                'Prompt responses guaranteed',
+                'Same-day response, Mon – Fri',
                 'Personalized — not just a number',
               ].map(t => (
                 <div key={t} className="flex items-center gap-2 text-sm hero-trust-item">
@@ -198,11 +198,113 @@ export default function HomePage() {
                 <Link href="/appointment" className="btn-gold">
                   Book an Appointment <ArrowRight size={15} />
                 </Link>
-                <a href="tel:09952638355"
+                <a href="tel:09953622071"
                   className="btn-outline"
                   style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}
                 >
                   <Phone size={14} /> Call Now
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── LOCATION SECTION ── */}
+      <section className="section-pad-sm">
+        <div className="container-site">
+          <div className="mb-10">
+            <p className="eyebrow mb-5">Find Us</p>
+            <h2
+              className="font-display font-light leading-tight"
+              style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', color: 'var(--text-primary)' }}
+            >
+              Office <em>Location</em>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+            {/* Map embed */}
+            <div className="lg:col-span-3 rounded-2xl overflow-hidden card-luxury" style={{ minHeight: '360px' }}>
+              <iframe
+                title="Diaz Law Office Location"
+                src="https://www.openstreetmap.org/export/embed.html?bbox=120.35372%2C16.39057%2C120.35972%2C16.39457&layer=mapnik&marker=16.39257%2C120.35672"
+                width="100%"
+                height="100%"
+                style={{ border: 'none', minHeight: '360px', display: 'block' }}
+                loading="lazy"
+              />
+            </div>
+
+            {/* Office info */}
+            <div className="lg:col-span-2 flex flex-col justify-center space-y-6">
+              <div className="card-luxury p-7 space-y-5">
+                <p className="font-mono-dm text-xs tracking-widest uppercase" style={{ color: 'var(--gold)' }}>
+                  Office Details
+                </p>
+
+                {/* Address */}
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+                    style={{ background: 'var(--gold-pale)', border: '1px solid var(--gold-border)' }}>
+                    <MapPinIcon size={15} style={{ color: 'var(--gold)' }} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold mb-0.5 font-mono-dm tracking-wider uppercase"
+                      style={{ color: 'var(--text-muted)' }}>Address</p>
+                    <p className="text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+                      2nd Floor, 7-Eleven Building<br />
+                      Aringay, 2503 La Union<br />
+                      Philippines
+                    </p>
+                  </div>
+                </div>
+
+                {/* Hours */}
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+                    style={{ background: 'var(--gold-pale)', border: '1px solid var(--gold-border)' }}>
+                    <ClockIcon size={15} style={{ color: 'var(--gold)' }} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold mb-1 font-mono-dm tracking-wider uppercase"
+                      style={{ color: 'var(--text-muted)' }}>Office Hours</p>
+                    <div className="space-y-0.5">
+                      <div className="flex items-center justify-between text-sm gap-8">
+                        <span style={{ color: 'var(--text-secondary)' }}>Monday – Friday</span>
+                        <span className="font-medium" style={{ color: 'var(--text-primary)' }}>8:00 AM – 5:00 PM</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm gap-8">
+                        <span style={{ color: 'var(--text-secondary)' }}>Saturday – Sunday</span>
+                        <span className="text-red-500 font-medium text-xs">Closed</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Phone */}
+                <div className="flex items-start gap-3">
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+                    style={{ background: 'var(--gold-pale)', border: '1px solid var(--gold-border)' }}>
+                    <PhoneIcon size={15} style={{ color: 'var(--gold)' }} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold mb-0.5 font-mono-dm tracking-wider uppercase"
+                      style={{ color: 'var(--text-muted)' }}>Phone</p>
+                    <a href="tel:09953622071" className="text-sm font-medium footer-link"
+                      style={{ color: 'var(--text-primary)' }}>
+                      0995 362 2071
+                    </a>
+                  </div>
+                </div>
+
+                <a
+                  href="https://www.google.com/maps/place/Diaz+Law+Office/@16.3936726,120.3567218,20.19z"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-outline w-full justify-center text-xs py-3 mt-2"
+                >
+                  Open in Google Maps ↗
                 </a>
               </div>
             </div>

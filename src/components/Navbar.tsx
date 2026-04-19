@@ -108,34 +108,36 @@ export function Navbar() {
           {/* Right controls */}
           <div className="flex items-center gap-3">
 
-            {/* Theme toggle with label */}
+            {/* Theme toggle with label — fixed height to match Book Now */}
             {mounted && (
-              <div className="flex flex-col items-center gap-0.5">
-                <button
-                  onClick={toggle}
-                  aria-label="Toggle theme"
-                  className="w-9 h-9 rounded-md flex items-center justify-center transition-all duration-200"
-                  style={{
-                    background: toggleBg,
-                    border: `1px solid ${toggleBorder}`,
-                    color: toggleColor,
-                  }}
-                >
-                  {isDark ? <Sun size={14} /> : <Moon size={14} />}
-                </button>
+              <button
+                onClick={toggle}
+                aria-label="Toggle theme"
+                className="flex flex-col items-center justify-center gap-0.5 rounded-md transition-all duration-200"
+                style={{
+                  width: '2.75rem',
+                  height: '2.5rem',
+                  background: toggleBg,
+                  border: `1px solid ${toggleBorder}`,
+                  color: toggleColor,
+                  flexShrink: 0,
+                }}
+              >
+                {isDark ? <Sun size={13} /> : <Moon size={13} />}
                 <span
-                  className="font-mono-dm"
+                  className="font-mono-dm select-none"
                   style={{
                     fontSize: '0.5rem',
-                    letterSpacing: '0.12em',
+                    letterSpacing: '0.1em',
                     textTransform: 'uppercase',
-                    color: toggleColor,
+                    color: isDark ? 'rgba(201,168,76,0.85)' : 'rgba(184,146,42,0.9)',
                     lineHeight: 1,
+                    fontWeight: 600,
                   }}
                 >
                   {isDark ? 'Dark' : 'Light'}
                 </span>
-              </div>
+              </button>
             )}
 
             {/* Book Now CTA */}
