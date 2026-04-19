@@ -19,6 +19,9 @@ export function Navbar() {
   const [open,    setOpen]    = useState(false)
   const [mounted, setMounted] = useState(false)
 
+  // Hide entirely on admin pages — admin has its own navbar
+  if (pathname?.startsWith('/admin-diazlaw-portal')) return null
+
   const isDark = mounted ? theme === 'dark' : false
 
   useEffect(() => { setMounted(true) }, [])

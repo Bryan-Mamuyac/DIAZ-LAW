@@ -16,6 +16,9 @@ export type Appointment = {
   description?: string
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
   appointment_date?: string
+  appointment_time?: string
+  email?: string
+  contact_number?: string
   notes?: string
 }
 
@@ -27,4 +30,14 @@ export type ContactMessage = {
   subject: string
   message: string
   read?: boolean
+}
+
+export type FinancialRecord = {
+  id?: string
+  created_at?: string
+  record_date: string
+  type: 'revenue' | 'expense'
+  category: string
+  amount: number
+  description: string
 }
