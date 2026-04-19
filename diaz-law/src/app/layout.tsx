@@ -20,23 +20,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap"
           rel="stylesheet"
         />
-        {/* Prevent theme flash: read localStorage before React hydrates */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var saved = localStorage.getItem('diazlaw-theme');
-                  var theme = (saved === 'dark') ? 'dark' : 'light';
-                  document.documentElement.classList.remove('dark', 'light');
-                  document.documentElement.classList.add(theme);
-                } catch(e) {
-                  document.documentElement.classList.add('light');
-                }
-              })();
-            `,
-          }}
-        />
       </head>
       <body>
         <ThemeProvider>

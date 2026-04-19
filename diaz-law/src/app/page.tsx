@@ -42,21 +42,53 @@ export default function HomePage() {
   return (
     <>
       {/* ── HERO ── */}
-      <section className="hero-section">
-        {/* Decorative background shapes */}
-        <div className="hero-deco-circle hero-deco-circle-1" />
-        <div className="hero-deco-circle hero-deco-circle-2" />
+      <section className="hero-bg min-h-screen flex flex-col justify-center relative overflow-hidden pt-[68px]">
+        {/* Top gold line */}
+        <div
+          className="absolute top-0 inset-x-0 h-px"
+          style={{ background: 'linear-gradient(90deg, transparent, var(--gold) 40%, var(--gold) 60%, transparent)', opacity: 0.5 }}
+        />
 
-        <div className="hero-container relative z-10">
-          {/* Glass card wrapper */}
-          <div className="hero-glass-card">
+        {/* Background texture lines */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {[...Array(6)].map((_, i) => (
+            <div key={i}
+              className="absolute h-px opacity-[0.04]"
+              style={{
+                background: 'var(--gold)',
+                top: `${15 + i * 14}%`,
+                left: 0, right: 0,
+              }}
+            />
+          ))}
+          {/* Large decorative circle */}
+          <div className="absolute right-[-10%] top-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full"
+            style={{
+              border: '1px solid rgba(201,168,76,0.08)',
+              boxShadow: 'inset 0 0 120px rgba(201,168,76,0.03)',
+            }}
+          />
+          <div className="absolute right-[5%] top-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full"
+            style={{ border: '1px solid rgba(201,168,76,0.05)' }}
+          />
+        </div>
+
+        <div className="container-site py-24 relative z-10">
+          <div className="max-w-3xl">
             {/* Eyebrow */}
-            <div className="eyebrow mb-8 anim-fade-in">
+            <div className="eyebrow mb-8 anim-fade-in" style={{ color: 'rgba(201,168,76,0.8)' }}>
               Private Practitioner · Est. July 2024
             </div>
 
             {/* Headline */}
-            <h1 className="font-display font-light leading-[1.08] mb-7 anim-fade-up d-1 hero-headline">
+            <h1
+              className="font-display font-light leading-[1.08] mb-7 anim-fade-up d-1"
+              style={{
+                fontSize: 'clamp(3.25rem, 7vw, 5.5rem)',
+                color: '#EDE8DE',
+                letterSpacing: '-0.01em',
+              }}
+            >
               Trusted Legal
               <span className="block italic">
                 <span className="gold-shimmer">Counsel &amp; Care.</span>
@@ -64,7 +96,10 @@ export default function HomePage() {
             </h1>
 
             {/* Sub */}
-            <p className="text-lg leading-relaxed mb-10 max-w-xl anim-fade-up d-2 hero-sub">
+            <p
+              className="text-lg leading-relaxed mb-10 max-w-xl anim-fade-up d-2"
+              style={{ color: 'rgba(176,168,156,0.85)', fontWeight: 300 }}
+            >
               Atty. Jushua Mari Lumague Diaz delivers rigorous legal and notarial services —
               helping individuals and businesses navigate the law with clarity and confidence.
             </p>
@@ -74,7 +109,10 @@ export default function HomePage() {
               <Link href="/appointment" className="btn-gold">
                 Book an Appointment <ArrowRight size={15} />
               </Link>
-              <Link href="/contact" className="btn-outline">
+              <Link href="/contact"
+                className="btn-outline"
+                style={{ borderColor: 'rgba(237,232,222,0.2)', color: 'rgba(237,232,222,0.8)' }}
+              >
                 <Phone size={14} /> Contact Us
               </Link>
             </div>
@@ -87,7 +125,7 @@ export default function HomePage() {
                 'Prompt responses guaranteed',
                 'Personalized — not just a number',
               ].map(t => (
-                <div key={t} className="flex items-center gap-2 text-sm hero-trust-item">
+                <div key={t} className="flex items-center gap-2 text-sm" style={{ color: 'rgba(176,168,156,0.7)' }}>
                   <CheckCircle size={13} style={{ color: 'var(--gold)', opacity: 0.8, flexShrink: 0 }} />
                   {t}
                 </div>
@@ -95,6 +133,12 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+
+        {/* Bottom fade */}
+        <div
+          className="absolute bottom-0 inset-x-0 h-40 pointer-events-none"
+          style={{ background: 'linear-gradient(to top, var(--bg-canvas), transparent)' }}
+        />
       </section>
 
       {/* ── STATS BAR ── */}
@@ -141,11 +185,17 @@ export default function HomePage() {
               <div key={title} className="card-luxury p-7 group">
                 <div
                   className="w-11 h-11 rounded-lg flex items-center justify-center mb-5 transition-all duration-300"
-                  style={{ background: 'var(--gold-pale)', border: '1px solid var(--gold-border)' }}
+                  style={{
+                    background: 'var(--gold-pale)',
+                    border: '1px solid var(--gold-border)',
+                  }}
                 >
                   <Icon size={20} style={{ color: 'var(--gold)' }} />
                 </div>
-                <h3 className="font-display font-medium mb-3" style={{ fontSize: '1.2rem', color: 'var(--text-primary)' }}>
+                <h3
+                  className="font-display font-medium mb-3"
+                  style={{ fontSize: '1.2rem', color: 'var(--text-primary)' }}
+                >
                   {title}
                 </h3>
                 <p className="text-sm leading-relaxed mb-5" style={{ color: 'var(--text-muted)' }}>
@@ -169,9 +219,10 @@ export default function HomePage() {
       <section className="section-pad-sm">
         <div className="container-site">
           <div
-            className="cta-banner rounded-2xl relative overflow-hidden p-12 sm:p-16"
+            className="rounded-2xl relative overflow-hidden p-12 sm:p-16"
             style={{ background: 'var(--navy)' }}
           >
+            {/* decorative */}
             <div className="absolute inset-0 pointer-events-none">
               <div className="absolute top-0 inset-x-0 h-px"
                 style={{ background: 'linear-gradient(90deg, transparent, var(--gold) 40%, transparent)', opacity: 0.4 }} />

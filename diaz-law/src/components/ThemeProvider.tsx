@@ -14,12 +14,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    // Clear any old theme keys from previous versions
     localStorage.removeItem('theme')
+
     const saved = localStorage.getItem('diazlaw-theme') as Theme | null
+    // Only go dark if user explicitly chose dark
     const resolved: Theme = saved === 'dark' ? 'dark' : 'light'
+
     setTheme(resolved)
-    document.documentElement.classList.remove('dark', 'light')
-    document.documentElement.classList.add(resolved)
+    // Remove dark class first, then add only if needed
+    document.documentElement.classList.remove('dark')
+    if (resolved === 'dark') {
+      document.documentElement.classList.add('dark')
+    }
     setMounted(true)
   }, [])
 
@@ -27,8 +34,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const next: Theme = theme === 'light' ? 'dark' : 'light'
     setTheme(next)
     localStorage.setItem('diazlaw-theme', next)
-    document.documentElement.classList.remove('dark', 'light')
-    document.documentElement.classList.add(next)
+    document.documentElement.classList.remove('dark')
+    if (next === 'dark') {
+      document.documentElement.classList.add('dark')
+    }
   }
 
   return (
