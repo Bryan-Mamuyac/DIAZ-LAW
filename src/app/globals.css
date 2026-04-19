@@ -508,11 +508,11 @@ body::after {
 }
 
 /* ══════════════════════════════════════
-   CTA BANNER — LIGHT MODE OVERRIDE
+   CTA BANNER — theme adaptive
 ══════════════════════════════════════ */
-.light .cta-banner {
-  background: linear-gradient(135deg, #1a2540 0%, #0f1a30 100%) !important;
-  border: 1px solid rgba(184,146,42,0.2);
+.cta-banner {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border) !important;
 }
 
 /* ══════════════════════════════════════

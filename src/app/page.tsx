@@ -170,7 +170,7 @@ export default function HomePage() {
         <div className="container-site">
           <div
             className="cta-banner rounded-2xl relative overflow-hidden p-12 sm:p-16"
-            style={{ background: 'var(--navy)' }}
+            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
           >
             <div className="absolute inset-0 pointer-events-none">
               <div className="absolute top-0 inset-x-0 h-px"
@@ -182,16 +182,16 @@ export default function HomePage() {
             </div>
 
             <div className="relative max-w-2xl">
-              <p className="eyebrow mb-6" style={{ color: 'rgba(201,168,76,0.7)' }}>
+              <p className="eyebrow mb-6" style={{ color: 'var(--gold)' }}>
                 Ready to proceed?
               </p>
               <h2
                 className="font-display font-light mb-5 leading-tight"
-                style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', color: '#EDE8DE' }}
+                style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', color: 'var(--text-primary)' }}
               >
                 Schedule Your <em>Consultation</em> Today
               </h2>
-              <p className="text-base mb-8" style={{ color: 'rgba(176,168,156,0.75)', fontWeight: 300, maxWidth: '460px' }}>
+              <p className="text-base mb-8" style={{ color: 'var(--text-muted)', fontWeight: 300, maxWidth: '460px' }}>
                 Book online in minutes — no account required. Atty. Diaz will confirm your appointment personally.
               </p>
               <div className="flex flex-wrap gap-4">
@@ -200,7 +200,7 @@ export default function HomePage() {
                 </Link>
                 <a href="tel:09952638355"
                   className="btn-outline"
-                  style={{ borderColor: 'rgba(237,232,222,0.2)', color: 'rgba(237,232,222,0.8)' }}
+                  style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}
                 >
                   <Phone size={14} /> Call Now
                 </a>
