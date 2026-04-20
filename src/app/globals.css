@@ -443,8 +443,102 @@ body::after {
 }
 
 /* ══════════════════════════════════════
-   SECTION SPACING UTILITIES
+   ADMIN PORTAL — RESPONSIVE
 ══════════════════════════════════════ */
+.admin-page-wrap {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2.25rem 2.5rem;
+}
+.admin-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+.admin-fin-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+.admin-chart-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+.admin-bottom-grid {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 1.25rem;
+}
+.admin-nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.admin-header-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .admin-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-page-wrap {
+    padding: 1.25rem 1rem;
+  }
+  .admin-header-inner {
+    padding: 0 1rem;
+    gap: 8px;
+  }
+  .admin-stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .admin-fin-stat-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  .admin-chart-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+  .admin-bottom-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .admin-nav-tabs {
+    gap: 4px;
+  }
+  /* Hide text labels on mobile — icons still visible */
+  .admin-brand-subtitle {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-fin-stat-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-page-wrap {
+    padding: 1rem 0.75rem;
+  }
+}
+
 .section-pad    { padding-top: 6rem;  padding-bottom: 6rem; }
 .section-pad-sm { padding-top: 3rem;  padding-bottom: 3rem; }
 

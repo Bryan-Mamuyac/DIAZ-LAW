@@ -509,18 +509,18 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
     return Array.from(seen).sort().reverse()
   }, [records])
 
-  // Chart data — group by yyyy-MM for correctness
+  // Chart data — day by day
   const chartData = useMemo(() => {
-    const months: Record<string,{month:string;revenue:number;expense:number}> = {}
-    records.forEach(r => {
-      const key = r.record_date.slice(0,7) // "2026-04"
-      const m   = format(parseISO(r.record_date.slice(0,7)+'-01'), "MMM ''yy")
-      if (!months[key]) months[key] = {month:m, revenue:0, expense:0}
-      if (r.type==='revenue') months[key].revenue += r.amount
-      else months[key].expense += r.amount
+    const days: Record<string,{month:string;revenue:number;expense:number}> = {}
+    filteredRecords.forEach(r => {
+      const key = r.record_date // "2026-04-20"
+      const label = format(parseISO(r.record_date), 'MMM d')
+      if (!days[key]) days[key] = {month:label, revenue:0, expense:0}
+      if (r.type==='revenue') days[key].revenue += r.amount
+      else days[key].expense += r.amount
     })
-    return Object.entries(months).sort(([a],[b])=>a.localeCompare(b)).map(([,v])=>v).slice(-8)
-  }, [records])
+    return Object.entries(days).sort(([a],[b])=>a.localeCompare(b)).map(([,v])=>v).slice(-30)
+  }, [filteredRecords])
 
   // Actions
   const updateStatus = async (id:string, status:AppStatus) => {
@@ -564,7 +564,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
       record_date:    finForm.record_date,
       type:           finForm.type,
       category:       '',
-      amount:         parseFloat(finForm.amount),
+      amount:         Math.round(parseFloat(finForm.amount) * 100) / 100,
       description:    finForm.description,
       invoice_number: finForm.invoice_number||null,
       client_name:    finForm.type==='revenue'?(finForm.client_name||null):null,
@@ -612,7 +612,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
 
       {/* ══ NAVBAR ══ */}
       <header style={{height:'68px', position:'sticky', top:0, zIndex:50, background:'#0A1628', borderBottom:'1px solid rgba(201,168,76,0.2)', boxShadow:'0 2px 20px rgba(0,0,0,0.4)', display:'flex', alignItems:'center'}}>
-        <div style={{maxWidth:'1280px', margin:'0 auto', padding:'0 2.5rem', display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%'}}>
+        <div className="admin-header-inner">
           {/* Brand */}
           <div style={{display:'flex', alignItems:'center', gap:'10px', flexShrink:0}}>
             <div style={{width:'36px', height:'36px', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(201,168,76,0.15)', border:'1px solid rgba(201,168,76,0.32)'}}>
@@ -620,20 +620,20 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
             </div>
             <div style={{lineHeight:1}}>
               <div style={{fontFamily:F_SERIF, fontWeight:600, fontSize:'1rem', color:'#EDE8DE', letterSpacing:'0.05em'}}>DIAZ LAW OFFICE</div>
-              <div style={{fontFamily:F_MONO, fontSize:'0.52rem', letterSpacing:'0.18em', textTransform:'uppercase', color:'rgba(201,168,76,0.65)', marginTop:'3px'}}>Admin Portal</div>
+              <div className="admin-brand-subtitle" style={{fontFamily:F_MONO, fontSize:'0.52rem', letterSpacing:'0.18em', textTransform:'uppercase', color:'rgba(201,168,76,0.65)', marginTop:'3px'}}>Admin Portal</div>
             </div>
           </div>
 
           {/* Nav tabs */}
-          <nav style={{display:'flex', alignItems:'center', gap:'6px'}}>
+          <nav className="admin-nav-tabs">
             <div style={{position:'relative'}}>
-              <button onClick={()=>setTab('appointments')} style={{display:'flex', alignItems:'center', gap:'7px', padding:'0.45rem 1.125rem', borderRadius:'8px', cursor:'pointer', fontFamily:F_BODY, fontSize:'0.9rem', fontWeight:500, transition:'all 0.2s', background:tab==='appointments'?'rgba(201,168,76,0.18)':'transparent', color:tab==='appointments'?'#C9A84C':'rgba(237,232,222,0.65)', border:`1px solid ${tab==='appointments'?'rgba(201,168,76,0.32)':'transparent'}`}}>
-                <LayoutDashboard size={14}/> Appointments
+              <button onClick={()=>setTab('appointments')} style={{display:'flex', alignItems:'center', gap:'7px', padding:'0.45rem 0.875rem', borderRadius:'8px', cursor:'pointer', fontFamily:F_BODY, fontSize:'0.85rem', fontWeight:500, transition:'all 0.2s', background:tab==='appointments'?'rgba(201,168,76,0.18)':'transparent', color:tab==='appointments'?'#C9A84C':'rgba(237,232,222,0.65)', border:`1px solid ${tab==='appointments'?'rgba(201,168,76,0.32)':'transparent'}`}}>
+                <LayoutDashboard size={13}/> <span className="admin-brand-subtitle">Appointments</span>
               </button>
               {totalBadge>0&&<span style={{position:'absolute', top:'-7px', right:'-7px', background:'#ef4444', color:'#fff', borderRadius:'50%', width:'18px', height:'18px', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:F_NUM, fontSize:'0.7rem', fontWeight:700, border:'2px solid #0A1628'}}>{totalBadge}</span>}
             </div>
-            <button onClick={()=>setTab('financial')} style={{display:'flex', alignItems:'center', gap:'7px', padding:'0.45rem 1.125rem', borderRadius:'8px', cursor:'pointer', fontFamily:F_BODY, fontSize:'0.9rem', fontWeight:500, transition:'all 0.2s', background:tab==='financial'?'rgba(201,168,76,0.18)':'transparent', color:tab==='financial'?'#C9A84C':'rgba(237,232,222,0.65)', border:`1px solid ${tab==='financial'?'rgba(201,168,76,0.32)':'transparent'}`}}>
-              <BarChart2 size={14}/> Financial
+            <button onClick={()=>setTab('financial')} style={{display:'flex', alignItems:'center', gap:'7px', padding:'0.45rem 0.875rem', borderRadius:'8px', cursor:'pointer', fontFamily:F_BODY, fontSize:'0.85rem', fontWeight:500, transition:'all 0.2s', background:tab==='financial'?'rgba(201,168,76,0.18)':'transparent', color:tab==='financial'?'#C9A84C':'rgba(237,232,222,0.65)', border:`1px solid ${tab==='financial'?'rgba(201,168,76,0.32)':'transparent'}`}}>
+              <BarChart2 size={13}/> <span className="admin-brand-subtitle">Financial</span>
             </button>
           </nav>
 
@@ -647,13 +647,13 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
       </header>
 
       {/* ══ PAGE ══ */}
-      <div style={{maxWidth:'1280px', margin:'0 auto', padding:'2.25rem 2.5rem'}}>
+      <div className="admin-page-wrap">
 
         {/* ── APPOINTMENTS TAB ── */}
         {tab==='appointments'&&(
           <>
             {/* Stats — 4 cards, no Unread Msgs */}
-            <div style={{display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'1rem', marginBottom:'2rem'}}>
+            <div className="admin-stat-grid">
               {[
                 {label:'Total',     v:stats.total,     Icon:CalendarCheck, color:'#C9A84C'},
                 {label:'Pending',   v:stats.pending,   Icon:Clock,         color:'#D97706'},
@@ -793,7 +793,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
         {tab==='financial'&&(
           <>
             {/* Summary cards */}
-            <div style={{display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'1.25rem', marginBottom:'2rem'}}>
+            <div className="admin-fin-stat-grid">
               {[
                 {label:'Total Revenue', v:totalRevenue, Icon:TrendingUp,  color:'#16A34A'},
                 {label:'Total Expense', v:totalExpense, Icon:TrendingDown, color:'#DC2626'},
@@ -812,10 +812,10 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
             </div>
 
             {/* Charts */}
-            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1.25rem', marginBottom:'2rem'}}>
+            <div className="admin-chart-grid">
               {/* LINE CHART */}
               <div style={{...CARD, padding:'1.75rem'}}>
-                <p style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700, marginBottom:'1.5rem'}}>Revenue vs Expense — Trend</p>
+                <p style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700, marginBottom:'1.5rem'}}>Revenue vs Expense — Daily</p>
                 {chartData.length===0
                   ? <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.95rem', padding:'3.5rem 0', fontFamily:F_BODY}}>No data yet</p>
                   : <CustomLineChart data={chartData} fmtPHP={fmtPHP} isDark={isDark}/>
@@ -823,7 +823,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
               </div>
               {/* BAR CHART */}
               <div style={{...CARD, padding:'1.75rem'}}>
-                <p style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700, marginBottom:'1.5rem'}}>Monthly Comparison — Bar</p>
+                <p style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700, marginBottom:'1.5rem'}}>Daily Comparison — Bar</p>
                 {chartData.length===0
                   ? <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.95rem', padding:'3.5rem 0', fontFamily:F_BODY}}>No data yet</p>
                   : <CustomBarChart data={chartData} fmtPHP={fmtPHP} isDark={isDark}/>
@@ -832,7 +832,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
             </div>
 
             {/* Add Record + Transaction History */}
-            <div style={{display:'grid', gridTemplateColumns:'400px 1fr', gap:'1.25rem'}}>
+            <div className="admin-bottom-grid">
               {/* Form */}
               <div style={{...CARD, padding:'1.75rem'}}>
                 <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'1.5rem'}}>
