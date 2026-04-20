@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { supabase, Appointment, ContactMessage, FinancialRecord } from '@/lib/supabase'
+import * as XLSX from 'xlsx'
 import {
   CalendarCheck, Mail, Users, Clock, CheckCircle2, Eye,
   ChevronDown, RefreshCw, LayoutDashboard, MessageSquare,
@@ -588,34 +589,83 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
     dl([h,...r],'appointments.csv')
   }
   const exportFinCSV = () => {
-    const revenues = filteredRecords.filter(r => r.type === 'revenue')
-    const expenses = filteredRecords.filter(r => r.type === 'expense')
-    const totalRev = revenues.reduce((s, r) => s + r.amount, 0)
-    const totalExp = expenses.reduce((s, r) => s + r.amount, 0)
+    // ── Smart filename ──────────────────────────────
+    const year = finMonthFilter !== 'all' ? finMonthFilter.slice(0,4) : new Date().getFullYear().toString()
+    const monthName = finMonthFilter !== 'all'
+      ? format(parseISO(finMonthFilter+'-01'), 'MMMM').toLowerCase()
+      : null
+    const suffix = monthName ? `${monthName}${year}` : year
 
-    const h = ['Date','Type','Amount','Invoice','Client','Issue','Payment','Description']
+    let filename: string
+    if (finTypeFilter === 'revenue')      filename = `revenue_${suffix}.xlsx`
+    else if (finTypeFilter === 'expense') filename = `expense_${suffix}.xlsx`
+    else                                  filename = `revenue_expense_all_${suffix}.xlsx`
+    if (finMonthFilter !== 'all' && finTypeFilter === 'all')
+      filename = `revenue_expense_${suffix}.xlsx`
+
+    // ── Row builder ─────────────────────────────────
+    const HEADERS = ['Date','Type','Amount','Invoice','Client','Issue','Payment','Description']
     const toRow = (rec: FinancialRecord) => {
       const x = rec as Record<string,unknown>
-      return [rec.record_date, rec.type, rec.amount, x.invoice_number||'', x.client_name||'', x.client_issue||'', x.payment_method||'', `"${rec.description}"`]
+      return {
+        Date:        rec.record_date,
+        Type:        rec.type,
+        Amount:      rec.amount,
+        Invoice:     (x.invoice_number as string)||'',
+        Client:      (x.client_name as string)||'',
+        Issue:       (x.client_issue as string)||'',
+        Payment:     (x.payment_method as string)||'',
+        Description: rec.description,
+      }
     }
 
-    const rows: unknown[][] = []
-    rows.push(h)
+    const revenues = filteredRecords.filter(r => r.type === 'revenue')
+    const expenses = filteredRecords.filter(r => r.type === 'expense')
+    const totalRev = revenues.reduce((s,r) => s+r.amount, 0)
+    const totalExp = expenses.reduce((s,r) => s+r.amount, 0)
 
-    if (revenues.length > 0) {
-      revenues.forEach(r => rows.push(toRow(r)))
-      rows.push(['','','','','','','',''])
-      rows.push(['TOTAL REVENUE','',totalRev,'','','','',''])
-      rows.push(['','','','','','','',''])
+    const wb = XLSX.utils.book_new()
+
+    // ── Revenue sheet ───────────────────────────────
+    if (finTypeFilter !== 'expense') {
+      const revRows = revenues.map(toRow)
+      const revSheet = XLSX.utils.json_to_sheet(revRows, {header: HEADERS})
+      // Total row
+      const totalRowIdx = revRows.length + 2
+      XLSX.utils.sheet_add_aoa(revSheet, [
+        ['','','','','','','',''],
+        ['TOTAL REVENUE','', totalRev,'','','','',''],
+      ], {origin: revRows.length + 1})
+      // Bold the total row via cell styles (basic)
+      revSheet['!cols'] = [{wch:14},{wch:10},{wch:14},{wch:16},{wch:20},{wch:18},{wch:12},{wch:24}]
+      XLSX.utils.book_append_sheet(wb, revSheet, 'Revenue')
     }
 
-    if (expenses.length > 0) {
-      expenses.forEach(r => rows.push(toRow(r)))
-      rows.push(['','','','','','','',''])
-      rows.push(['TOTAL EXPENSE','',totalExp,'','','','',''])
+    // ── Expense sheet ───────────────────────────────
+    if (finTypeFilter !== 'revenue') {
+      const expRows = expenses.map(toRow)
+      const expSheet = XLSX.utils.json_to_sheet(expRows, {header: HEADERS})
+      XLSX.utils.sheet_add_aoa(expSheet, [
+        ['','','','','','','',''],
+        ['TOTAL EXPENSE','', totalExp,'','','','',''],
+      ], {origin: expRows.length + 1})
+      expSheet['!cols'] = [{wch:14},{wch:10},{wch:14},{wch:16},{wch:20},{wch:18},{wch:12},{wch:24}]
+      XLSX.utils.book_append_sheet(wb, expSheet, 'Expense')
     }
 
-    dl(rows, 'financial_records.csv')
+    // ── Summary sheet (only when exporting both) ────
+    if (finTypeFilter === 'all') {
+      const summaryData = [
+        {Label:'Total Revenue', Amount: totalRev},
+        {Label:'Total Expense', Amount: totalExp},
+        {Label:'Net Income',    Amount: totalRev - totalExp},
+      ]
+      const sumSheet = XLSX.utils.json_to_sheet(summaryData)
+      sumSheet['!cols'] = [{wch:20},{wch:16}]
+      XLSX.utils.book_append_sheet(wb, sumSheet, 'Summary')
+    }
+
+    XLSX.writeFile(wb, filename)
   }
   const dl = (rows:unknown[][],name:string) => {
     const csv=rows.map(x=>x.join(',')).join('\n')
@@ -820,18 +870,25 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
             {/* Summary cards */}
             <div className="admin-fin-stat-grid">
               {[
-                {label:'Total Revenue', v:totalRevenue, Icon:TrendingUp,  color:'#16A34A'},
-                {label:'Total Expense', v:totalExpense, Icon:TrendingDown, color:'#DC2626'},
-                {label:'Net Income',    v:netIncome,    Icon:DollarSign,   color:netIncome>=0?'#16A34A':'#DC2626'},
-              ].map(({label,v,Icon,color})=>(
-                <div key={label} style={{...CARD, padding:'1.75rem'}}>
-                  <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1rem'}}>
-                    <span style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--text-muted)', fontWeight:700}}>{label}</span>
-                    <div style={{width:'38px', height:'38px', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', background:`${color}18`, border:`1px solid ${color}35`}}>
-                      <Icon size={17} style={{color}}/>
+                {label:'Total Revenue', v:totalRevenue, Icon:TrendingUp,  color:'#16A34A', bg:'rgba(22,163,74,0.08)', accent:'rgba(22,163,74,0.5)'},
+                {label:'Total Expense', v:totalExpense, Icon:TrendingDown, color:'#DC2626', bg:'rgba(220,38,38,0.07)', accent:'rgba(220,38,38,0.45)'},
+                {label:'Net Income',    v:netIncome,    Icon:DollarSign,   color:netIncome>=0?'#16A34A':'#DC2626', bg:netIncome>=0?'rgba(22,163,74,0.08)':'rgba(220,38,38,0.07)', accent:netIncome>=0?'rgba(22,163,74,0.5)':'rgba(220,38,38,0.45)'},
+              ].map(({label,v,Icon,color,bg,accent})=>(
+                <div key={label} style={{...CARD, padding:'1.75rem', position:'relative', overflow:'hidden'}}>
+                  {/* Top accent bar */}
+                  <div style={{position:'absolute', top:0, left:0, right:0, height:'3px', background:`linear-gradient(90deg, ${accent}, transparent)`}}/>
+                  {/* Faint bg circle */}
+                  <div style={{position:'absolute', right:'-18px', bottom:'-18px', width:'90px', height:'90px', borderRadius:'50%', background:bg, pointerEvents:'none'}}/>
+                  <div style={{display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:'1.25rem'}}>
+                    <span style={{fontFamily:F_MONO, fontSize:'0.72rem', letterSpacing:'0.14em', textTransform:'uppercase', color:'var(--text-muted)', fontWeight:700, lineHeight:1.4}}>{label}</span>
+                    <div style={{width:'40px', height:'40px', borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', background:bg, border:`1px solid ${accent}`, flexShrink:0}}>
+                      <Icon size={18} style={{color}}/>
                     </div>
                   </div>
-                  <p style={{fontFamily:F_NUM, fontWeight:800, fontSize:'2.4rem', color, lineHeight:1, letterSpacing:'-0.02em'}}>{fmtPHP(v)}</p>
+                  <p style={{fontFamily:F_NUM, fontWeight:800, fontSize:'2.2rem', color, lineHeight:1, letterSpacing:'-0.03em'}}>{fmtPHP(v)}</p>
+                  <p style={{fontFamily:F_MONO, fontSize:'0.62rem', color:'var(--text-faint)', marginTop:'0.625rem', letterSpacing:'0.1em'}}>
+                    {label==='Net Income' ? (netIncome>=0?'▲ Profit':'▼ Loss') : label==='Total Revenue'?'Incoming funds':'Outgoing funds'}
+                  </p>
                 </div>
               ))}
             </div>
@@ -839,16 +896,24 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
             {/* Charts */}
             <div className="admin-chart-grid">
               {/* LINE CHART */}
-              <div style={{...CARD, padding:'1.75rem'}}>
-                <p style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700, marginBottom:'1.5rem'}}>Revenue vs Expense — Daily</p>
+              <div style={{...CARD, padding:'1.75rem', position:'relative', overflow:'hidden'}}>
+                <div style={{position:'absolute', top:0, left:0, right:0, height:'3px', background:'linear-gradient(90deg, var(--gold), transparent)'}}/>
+                <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1.5rem'}}>
+                  <p style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700}}>Revenue vs Expense — Daily</p>
+                  <span style={{fontFamily:F_MONO, fontSize:'0.6rem', color:'var(--text-faint)', letterSpacing:'0.08em', textTransform:'uppercase', background:'var(--bg-raised)', padding:'0.2rem 0.6rem', borderRadius:'4px', border:'1px solid var(--border)'}}>Line</span>
+                </div>
                 {chartData.length===0
                   ? <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.95rem', padding:'3.5rem 0', fontFamily:F_BODY}}>No data yet</p>
                   : <CustomLineChart data={chartData} fmtPHP={fmtPHP} isDark={isDark}/>
                 }
               </div>
               {/* BAR CHART */}
-              <div style={{...CARD, padding:'1.75rem'}}>
-                <p style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700, marginBottom:'1.5rem'}}>Daily Comparison — Bar</p>
+              <div style={{...CARD, padding:'1.75rem', position:'relative', overflow:'hidden'}}>
+                <div style={{position:'absolute', top:0, left:0, right:0, height:'3px', background:'linear-gradient(90deg, var(--gold), transparent)'}}/>
+                <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1.5rem'}}>
+                  <p style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700}}>Daily Comparison — Bar</p>
+                  <span style={{fontFamily:F_MONO, fontSize:'0.6rem', color:'var(--text-faint)', letterSpacing:'0.08em', textTransform:'uppercase', background:'var(--bg-raised)', padding:'0.2rem 0.6rem', borderRadius:'4px', border:'1px solid var(--border)'}}>Bar</span>
+                </div>
                 {chartData.length===0
                   ? <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.95rem', padding:'3.5rem 0', fontFamily:F_BODY}}>No data yet</p>
                   : <CustomBarChart data={chartData} fmtPHP={fmtPHP} isDark={isDark}/>
@@ -859,9 +924,12 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
             {/* Add Record + Transaction History */}
             <div className="admin-bottom-grid">
               {/* Form */}
-              <div style={{...CARD, padding:'1.75rem', display:'flex', flexDirection:'column'}}>
+              <div style={{...CARD, padding:'1.75rem', display:'flex', flexDirection:'column', position:'relative', overflow:'hidden'}}>
+                <div style={{position:'absolute', top:0, left:0, right:0, height:'3px', background:'linear-gradient(90deg, var(--gold), transparent)'}}/>
                 <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'1.5rem'}}>
-                  <Plus size={16} style={{color:'var(--gold)'}}/>
+                  <div style={{width:'32px', height:'32px', borderRadius:'8px', background:'var(--gold-pale)', border:'1px solid var(--gold-border)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
+                    <Plus size={15} style={{color:'var(--gold)'}}/>
+                  </div>
                   <p style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700}}>Add Record</p>
                 </div>
 
@@ -1003,15 +1071,22 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
               </div>
 
               {/* Transaction History */}
-              <div style={{...CARD, overflow:'hidden', display:'flex', flexDirection:'column', minHeight:0, flex:1}}>
+              <div style={{...CARD, overflow:'hidden', display:'flex', flexDirection:'column', minHeight:0, flex:1, position:'relative'}}>
+                <div style={{position:'absolute', top:0, left:0, right:0, height:'3px', background:'linear-gradient(90deg, var(--gold), transparent)'}}/>
                 <div style={{padding:'1.25rem 1.5rem', borderBottom:'1px solid var(--border)', flexShrink:0}}>
                   <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.875rem'}}>
-                    <p style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700}}>Transaction History</p>
-                    <button onClick={exportFinCSV} style={{display:'flex', alignItems:'center', gap:'5px', padding:'0.45rem 1rem', borderRadius:'8px', fontFamily:F_BODY, fontSize:'0.85rem', fontWeight:500, cursor:'pointer', background:'var(--bg-raised)', border:'1px solid var(--border)', color:'var(--text-secondary)'}}>
-                      <Download size={13}/> Export Excel
+                    <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
+                      <div style={{width:'32px', height:'32px', borderRadius:'8px', background:'var(--gold-pale)', border:'1px solid var(--gold-border)', display:'flex', alignItems:'center', justifyContent:'center'}}>
+                        <Filter size={13} style={{color:'var(--gold)'}}/>
+                      </div>
+                      <p style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700}}>Transaction History</p>
+                    </div>
+                    <button onClick={exportFinCSV} style={{display:'flex', alignItems:'center', gap:'6px', padding:'0.5rem 1.1rem', borderRadius:'8px', fontFamily:F_BODY, fontSize:'0.85rem', fontWeight:600, cursor:'pointer', background:'var(--gold)', border:'none', color:'#fff', boxShadow:'0 2px 8px rgba(184,146,42,0.3)', transition:'opacity 0.2s'}}
+                      onMouseEnter={e=>(e.currentTarget as HTMLButtonElement).style.opacity='0.85'}
+                      onMouseLeave={e=>(e.currentTarget as HTMLButtonElement).style.opacity='1'}>
+                      <Download size={13}/> Export .xlsx
                     </button>
                   </div>
-                  {/* Filters row */}
                   <div style={{display:'flex', gap:'8px', flexWrap:'wrap'}}>
                     <div style={{position:'relative'}}>
                       <Filter size={12} style={{position:'absolute', left:'9px', top:'50%', transform:'translateY(-50%)', color:'var(--text-faint)'}}/>
