@@ -10,10 +10,6 @@ import {
   LogOut, Sun, Moon, TrendingUp, TrendingDown, DollarSign,
   Plus, AlertTriangle, Trash2, BarChart2, Calendar, Filter,
 } from 'lucide-react'
-import {
-  LineChart, Line, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
-} from 'recharts'
 import toast from 'react-hot-toast'
 import { format, parseISO } from 'date-fns'
 
@@ -111,6 +107,168 @@ function IconBtn({ icon, label, onClick, danger=false }: {
       <span style={{color: danger?'#fca5a5':'rgba(237,232,222,0.75)', display:'flex'}}>{icon}</span>
       <span style={{fontFamily:F_MONO, fontSize:'0.52rem', letterSpacing:'0.12em', textTransform:'uppercase', color: danger?'rgba(252,165,165,0.75)':'rgba(201,168,76,0.7)', lineHeight:1, whiteSpace:'nowrap'}}>{label}</span>
     </button>
+  )
+}
+
+/* ══════════════════════════════════
+   CUSTOM CHARTS
+══════════════════════════════════ */
+type ChartPoint = { month: string; revenue: number; expense: number }
+
+function CustomLineChart({ data, fmtPHP, isDark }: { data: ChartPoint[]; fmtPHP: (n:number)=>string; isDark: boolean }) {
+  const [tooltip, setTooltip] = useState<{x:number;y:number;d:ChartPoint}|null>(null)
+  const W = 480, H = 200, PL = 56, PR = 16, PT = 12, PB = 32
+  const cW = W - PL - PR, cH = H - PT - PB
+  const maxVal = Math.max(...data.flatMap(d=>[d.revenue, d.expense]), 1)
+  const yTicks = 5
+  const xStep = data.length < 2 ? cW / 2 : cW / (data.length - 1)
+
+  const px = (i: number) => data.length < 2 ? PL + cW/2 : PL + i * xStep
+  const py = (v: number) => PT + cH - (v / maxVal) * cH
+
+  const lineD = (key: 'revenue'|'expense') =>
+    data.map((d,i) => `${i===0?'M':'L'}${px(i)},${py(d[key])}`).join(' ')
+
+  const textColor = isDark ? 'rgba(200,200,200,0.55)' : 'rgba(80,80,80,0.6)'
+  const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'
+
+  return (
+    <div style={{position:'relative', userSelect:'none'}}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%', height:'auto', display:'block'}}>
+        {/* Y grid + labels */}
+        {Array.from({length:yTicks+1},(_,i)=>{
+          const v = (maxVal/yTicks)*i
+          const y = py(v)
+          return (
+            <g key={i}>
+              <line x1={PL} y1={y} x2={W-PR} y2={y} stroke={gridColor} strokeDasharray="4 3"/>
+              <text x={PL-6} y={y+4} textAnchor="end" fontSize={10} fill={textColor} fontFamily="Inter,sans-serif">
+                ₱{v>=1000?`${(v/1000).toFixed(0)}k`:'0k'}
+              </text>
+            </g>
+          )
+        })}
+        {/* X labels */}
+        {data.map((d,i)=>(
+          <text key={i} x={px(i)} y={H-6} textAnchor="middle" fontSize={10} fill={textColor} fontFamily="Inter,sans-serif">{d.month}</text>
+        ))}
+        {/* Lines */}
+        <path d={lineD('revenue')} fill="none" stroke="#C9A84C" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"/>
+        <path d={lineD('expense')} fill="none" stroke="#DC2626" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"/>
+        {/* Dots + hover zones */}
+        {data.map((d,i)=>(
+          <g key={i}>
+            <circle cx={px(i)} cy={py(d.revenue)} r={4} fill="#C9A84C" stroke={isDark?'#0C1120':'#fff'} strokeWidth={2}/>
+            <circle cx={px(i)} cy={py(d.expense)}  r={4} fill="#DC2626" stroke={isDark?'#0C1120':'#fff'} strokeWidth={2}/>
+            <rect x={px(i)-18} y={PT} width={36} height={cH} fill="transparent"
+              onMouseEnter={e=>setTooltip({x:px(i),y:Math.min(py(d.revenue),py(d.expense)),d})}
+              onMouseLeave={()=>setTooltip(null)} style={{cursor:'crosshair'}}/>
+          </g>
+        ))}
+      </svg>
+      {/* Tooltip */}
+      {tooltip&&(
+        <div style={{position:'absolute', top:0, left:`${(tooltip.x/W)*100}%`, transform:'translateX(-50%)',
+          background:isDark?'#1a2235':'#fff', border:`1px solid ${isDark?'rgba(255,255,255,0.12)':'rgba(0,0,0,0.1)'}`,
+          borderRadius:'8px', padding:'0.6rem 0.9rem', pointerEvents:'none', zIndex:10, whiteSpace:'nowrap',
+          boxShadow:'0 4px 16px rgba(0,0,0,0.15)'}}>
+          <p style={{fontFamily:'Inter,sans-serif', fontSize:'0.78rem', fontWeight:700, color:isDark?'#EDE8DE':'#0A1628', marginBottom:'4px'}}>{tooltip.d.month}</p>
+          <p style={{fontFamily:'Inter,sans-serif', fontSize:'0.82rem', color:'#DC2626', marginBottom:'2px'}}>Expense : {fmtPHP(tooltip.d.expense)}</p>
+          <p style={{fontFamily:'Inter,sans-serif', fontSize:'0.82rem', color:'#C9A84C'}}>Revenue : {fmtPHP(tooltip.d.revenue)}</p>
+        </div>
+      )}
+      {/* Legend */}
+      <div style={{display:'flex', justifyContent:'center', gap:'1.25rem', marginTop:'0.5rem'}}>
+        {[{color:'#DC2626',label:'Expense'},{color:'#C9A84C',label:'Revenue'}].map(l=>(
+          <div key={l.label} style={{display:'flex', alignItems:'center', gap:'5px'}}>
+            <div style={{width:'24px', height:'3px', background:l.color, borderRadius:'2px'}}/>
+            <span style={{fontFamily:'Inter,sans-serif', fontSize:'0.8rem', color:isDark?'rgba(237,232,222,0.65)':'rgba(60,60,60,0.75)'}}>{l.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function CustomBarChart({ data, fmtPHP, isDark }: { data: ChartPoint[]; fmtPHP: (n:number)=>string; isDark: boolean }) {
+  const [tooltip, setTooltip] = useState<{i:number;d:ChartPoint}|null>(null)
+  const W = 480, H = 200, PL = 56, PR = 16, PT = 12, PB = 32
+  const cW = W - PL - PR, cH = H - PT - PB
+  const maxVal = Math.max(...data.flatMap(d=>[d.revenue, d.expense]), 1)
+  const yTicks = 5
+  const groupW = cW / data.length
+  const barW = Math.min(groupW * 0.35, 28)
+  const gap = barW * 0.3
+
+  const bx = (i: number, which: 0|1) => PL + i*groupW + groupW/2 + (which===0 ? -(barW+gap/2) : gap/2)
+  const bh = (v: number) => (v / maxVal) * cH
+  const by = (v: number) => PT + cH - bh(v)
+
+  const textColor = isDark ? 'rgba(200,200,200,0.55)' : 'rgba(80,80,80,0.6)'
+  const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)'
+
+  return (
+    <div style={{position:'relative', userSelect:'none'}}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%', height:'auto', display:'block'}}>
+        {/* Y grid + labels */}
+        {Array.from({length:yTicks+1},(_,i)=>{
+          const v = (maxVal/yTicks)*i
+          const y = by(v)
+          return (
+            <g key={i}>
+              <line x1={PL} y1={y} x2={W-PR} y2={y} stroke={gridColor} strokeDasharray="4 3"/>
+              <text x={PL-6} y={y+4} textAnchor="end" fontSize={10} fill={textColor} fontFamily="Inter,sans-serif">
+                ₱{v>=1000?`${(v/1000).toFixed(0)}k`:'0k'}
+              </text>
+            </g>
+          )
+        })}
+        {/* X labels */}
+        {data.map((d,i)=>(
+          <text key={i} x={PL + i*groupW + groupW/2} y={H-6} textAnchor="middle" fontSize={10} fill={textColor} fontFamily="Inter,sans-serif">{d.month}</text>
+        ))}
+        {/* Bars */}
+        {data.map((d,i)=>(
+          <g key={i}>
+            {/* Revenue bar */}
+            <rect x={bx(i,0)} y={by(d.revenue)} width={barW} height={Math.max(bh(d.revenue),2)}
+              fill="#C9A84C" rx={3}
+              opacity={tooltip && tooltip.i!==i ? 0.45 : 1}/>
+            {/* Expense bar */}
+            <rect x={bx(i,1)} y={by(d.expense)} width={barW} height={Math.max(bh(d.expense),2)}
+              fill="#DC2626" rx={3}
+              opacity={tooltip && tooltip.i!==i ? 0.45 : 1}/>
+            {/* Hover zone */}
+            <rect x={PL + i*groupW} y={PT} width={groupW} height={cH} fill="transparent"
+              onMouseEnter={()=>setTooltip({i,d})}
+              onMouseLeave={()=>setTooltip(null)} style={{cursor:'crosshair'}}/>
+          </g>
+        ))}
+      </svg>
+      {/* Tooltip */}
+      {tooltip&&(()=>{
+        const cx = PL + tooltip.i*groupW + groupW/2
+        return (
+          <div style={{position:'absolute', top:0, left:`${(cx/W)*100}%`, transform:'translateX(-50%)',
+            background:isDark?'#1a2235':'#fff', border:`1px solid ${isDark?'rgba(255,255,255,0.12)':'rgba(0,0,0,0.1)'}`,
+            borderRadius:'8px', padding:'0.6rem 0.9rem', pointerEvents:'none', zIndex:10, whiteSpace:'nowrap',
+            boxShadow:'0 4px 16px rgba(0,0,0,0.15)'}}>
+            <p style={{fontFamily:'Inter,sans-serif', fontSize:'0.78rem', fontWeight:700, color:isDark?'#EDE8DE':'#0A1628', marginBottom:'4px'}}>{tooltip.d.month}</p>
+            <p style={{fontFamily:'Inter,sans-serif', fontSize:'0.82rem', color:'#DC2626', marginBottom:'2px'}}>Expense : {fmtPHP(tooltip.d.expense)}</p>
+            <p style={{fontFamily:'Inter,sans-serif', fontSize:'0.82rem', color:'#C9A84C'}}>Revenue : {fmtPHP(tooltip.d.revenue)}</p>
+          </div>
+        )
+      })()}
+      {/* Legend */}
+      <div style={{display:'flex', justifyContent:'center', gap:'1.25rem', marginTop:'0.5rem'}}>
+        {[{color:'#DC2626',label:'Expense'},{color:'#C9A84C',label:'Revenue'}].map(l=>(
+          <div key={l.label} style={{display:'flex', alignItems:'center', gap:'5px'}}>
+            <div style={{width:'12px', height:'12px', background:l.color, borderRadius:'2px'}}/>
+            <span style={{fontFamily:'Inter,sans-serif', fontSize:'0.8rem', color:isDark?'rgba(237,232,222,0.65)':'rgba(60,60,60,0.75)'}}>{l.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -635,44 +793,28 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                       <Icon size={17} style={{color}}/>
                     </div>
                   </div>
-                  <p style={{fontFamily:F_NUM, fontWeight:700, fontSize:'2rem', color, lineHeight:1, letterSpacing:'-0.02em'}}>{fmtPHP(v)}</p>
+                  <p style={{fontFamily:F_NUM, fontWeight:800, fontSize:'2.4rem', color, lineHeight:1, letterSpacing:'-0.02em'}}>{fmtPHP(v)}</p>
                 </div>
               ))}
             </div>
 
             {/* Charts */}
             <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1.25rem', marginBottom:'2rem'}}>
+              {/* LINE CHART */}
               <div style={{...CARD, padding:'1.75rem'}}>
                 <p style={{fontFamily:F_MONO, fontSize:'0.68rem', letterSpacing:'0.14em', textTransform:'uppercase', color:'var(--gold)', marginBottom:'1.5rem'}}>Revenue vs Expense — Trend</p>
-                {chartData.length===0 ? <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.95rem', padding:'3.5rem 0', fontFamily:F_BODY}}>No data yet</p> : (
-                  <ResponsiveContainer width="100%" height={240}>
-                    <LineChart data={chartData} margin={{top:4,right:4,left:0,bottom:0}}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false}/>
-                      <XAxis dataKey="month" tick={{fontFamily:F_NUM, fontSize:'0.75rem', fill:'var(--text-faint)'}} axisLine={false} tickLine={false}/>
-                      <YAxis tick={{fontFamily:F_NUM, fontSize:'0.75rem', fill:'var(--text-faint)'}} axisLine={false} tickLine={false} tickFormatter={v=>`₱${(Number(v)/1000).toFixed(0)}k`}/>
-                      <Tooltip formatter={v=>fmtPHP(Number(v))} contentStyle={{background:'var(--bg-surface)', border:'1px solid var(--border)', borderRadius:'8px', fontFamily:F_BODY, fontSize:'0.9rem'}}/>
-                      <Legend wrapperStyle={{fontFamily:F_BODY, fontSize:'0.85rem'}}/>
-                      <Line dataKey="revenue" name="Revenue" stroke="#C9A84C" strokeWidth={2.5} dot={{r:4}} activeDot={{r:6}}/>
-                      <Line dataKey="expense" name="Expense" stroke="#DC2626" strokeWidth={2.5} dot={{r:4}} activeDot={{r:6}}/>
-                    </LineChart>
-                  </ResponsiveContainer>
-                )}
+                {chartData.length===0
+                  ? <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.95rem', padding:'3.5rem 0', fontFamily:F_BODY}}>No data yet</p>
+                  : <CustomLineChart data={chartData} fmtPHP={fmtPHP} isDark={isDark}/>
+                }
               </div>
+              {/* BAR CHART */}
               <div style={{...CARD, padding:'1.75rem'}}>
                 <p style={{fontFamily:F_MONO, fontSize:'0.68rem', letterSpacing:'0.14em', textTransform:'uppercase', color:'var(--gold)', marginBottom:'1.5rem'}}>Monthly Comparison — Bar</p>
-                {chartData.length===0 ? <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.95rem', padding:'3.5rem 0', fontFamily:F_BODY}}>No data yet</p> : (
-                  <ResponsiveContainer width="100%" height={240}>
-                    <BarChart data={chartData} margin={{top:4,right:4,left:0,bottom:0}}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false}/>
-                      <XAxis dataKey="month" tick={{fontFamily:F_NUM, fontSize:'0.75rem', fill:'var(--text-faint)'}} axisLine={false} tickLine={false}/>
-                      <YAxis tick={{fontFamily:F_NUM, fontSize:'0.75rem', fill:'var(--text-faint)'}} axisLine={false} tickLine={false} tickFormatter={v=>`₱${(Number(v)/1000).toFixed(0)}k`}/>
-                      <Tooltip formatter={v=>fmtPHP(Number(v))} contentStyle={{background:'var(--bg-surface)', border:'1px solid var(--border)', borderRadius:'8px', fontFamily:F_BODY, fontSize:'0.9rem'}}/>
-                      <Legend wrapperStyle={{fontFamily:F_BODY, fontSize:'0.85rem'}}/>
-                      <Bar dataKey="revenue" name="Revenue" fill="#C9A84C" radius={[5,5,0,0]}/>
-                      <Bar dataKey="expense" name="Expense" fill="#DC2626" radius={[5,5,0,0]}/>
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
+                {chartData.length===0
+                  ? <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.95rem', padding:'3.5rem 0', fontFamily:F_BODY}}>No data yet</p>
+                  : <CustomBarChart data={chartData} fmtPHP={fmtPHP} isDark={isDark}/>
+                }
               </div>
             </div>
 
@@ -882,18 +1024,18 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                             <tr key={r.id} style={{borderBottom:'1px solid var(--border)'}}
                               onMouseEnter={e=>(e.currentTarget as HTMLTableRowElement).style.background='var(--bg-raised)'}
                               onMouseLeave={e=>(e.currentTarget as HTMLTableRowElement).style.background=''}>
-                              <td style={{padding:'0.875rem 1rem', fontFamily:F_NUM, fontSize:'0.85rem', color:'var(--text-muted)', whiteSpace:'nowrap'}}>{format(parseISO(r.record_date),'MMM d, yyyy')}</td>
+                              <td style={{padding:'0.875rem 1rem', fontFamily:F_NUM, fontSize:'0.95rem', fontWeight:600, color:'var(--text-primary)', whiteSpace:'nowrap'}}>{format(parseISO(r.record_date),'MMM d, yyyy')}</td>
                               <td style={{padding:'0.875rem 1rem'}}>
-                                <span style={{background:r.type==='revenue'?'rgba(22,163,74,0.1)':'rgba(220,38,38,0.1)', color:r.type==='revenue'?'#16A34A':'#DC2626', border:`1px solid ${r.type==='revenue'?'rgba(22,163,74,0.25)':'rgba(220,38,38,0.25)'}`, padding:'0.22rem 0.6rem', borderRadius:'4px', fontFamily:F_MONO, fontSize:'0.65rem', fontWeight:600, letterSpacing:'0.08em', textTransform:'uppercase'}}>
+                                <span style={{background:r.type==='revenue'?'rgba(22,163,74,0.1)':'rgba(220,38,38,0.1)', color:r.type==='revenue'?'#16A34A':'#DC2626', border:`1px solid ${r.type==='revenue'?'rgba(22,163,74,0.25)':'rgba(220,38,38,0.25)'}`, padding:'0.22rem 0.6rem', borderRadius:'4px', fontFamily:F_MONO, fontSize:'0.68rem', fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase'}}>
                                   {r.type}
                                 </span>
                               </td>
-                              <td style={{padding:'0.875rem 1rem', fontFamily:F_NUM, fontSize:'0.9rem', fontWeight:700, color:r.type==='revenue'?'#16A34A':'#DC2626', whiteSpace:'nowrap'}}>{fmtPHP(r.amount)}</td>
-                              <td style={{padding:'0.875rem 1rem', fontSize:'0.85rem', color:'var(--text-muted)', fontFamily:F_MONO}}>{x.invoice_number||'—'}</td>
-                              <td style={{padding:'0.875rem 1rem', fontSize:'0.9rem', color:'var(--text-secondary)', fontFamily:F_BODY}}>{x.client_name||'—'}</td>
-                              <td style={{padding:'0.875rem 1rem', fontSize:'0.85rem', color:'var(--text-muted)', fontFamily:F_BODY, maxWidth:'140px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{x.client_issue||'—'}</td>
-                              <td style={{padding:'0.875rem 1rem', fontSize:'0.85rem', color:'var(--text-muted)', fontFamily:F_BODY}}>{x.payment_method||'—'}</td>
-                              <td style={{padding:'0.875rem 1rem', fontSize:'0.85rem', color:'var(--text-muted)', fontFamily:F_BODY, maxWidth:'160px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{r.description}</td>
+                              <td style={{padding:'0.875rem 1rem', fontFamily:F_NUM, fontSize:'1rem', fontWeight:800, color:r.type==='revenue'?'#16A34A':'#DC2626', whiteSpace:'nowrap'}}>{fmtPHP(r.amount)}</td>
+                              <td style={{padding:'0.875rem 1rem', fontSize:'0.9rem', fontWeight:600, color:'var(--text-secondary)', fontFamily:F_MONO}}>{x.invoice_number||'—'}</td>
+                              <td style={{padding:'0.875rem 1rem', fontSize:'0.95rem', fontWeight:700, color:'var(--text-primary)', fontFamily:F_BODY}}>{x.client_name||'—'}</td>
+                              <td style={{padding:'0.875rem 1rem', fontSize:'0.9rem', fontWeight:600, color:'var(--text-secondary)', fontFamily:F_BODY, maxWidth:'140px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{x.client_issue||'—'}</td>
+                              <td style={{padding:'0.875rem 1rem', fontSize:'0.9rem', fontWeight:600, color:'var(--text-secondary)', fontFamily:F_BODY}}>{x.payment_method||'—'}</td>
+                              <td style={{padding:'0.875rem 1rem', fontSize:'0.9rem', fontWeight:500, color:'var(--text-muted)', fontFamily:F_BODY, maxWidth:'160px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{r.description}</td>
                             </tr>
                           )
                         })}
