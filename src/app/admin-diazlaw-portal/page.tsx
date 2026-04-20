@@ -588,9 +588,34 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
     dl([h,...r],'appointments.csv')
   }
   const exportFinCSV = () => {
+    const revenues = filteredRecords.filter(r => r.type === 'revenue')
+    const expenses = filteredRecords.filter(r => r.type === 'expense')
+    const totalRev = revenues.reduce((s, r) => s + r.amount, 0)
+    const totalExp = expenses.reduce((s, r) => s + r.amount, 0)
+
     const h = ['Date','Type','Amount','Invoice','Client','Issue','Payment','Description']
-    const r = filteredRecords.map(rec=>{const x=rec as Record<string,unknown>; return [rec.record_date,rec.type,rec.amount,x.invoice_number||'',x.client_name||'',x.client_issue||'',x.payment_method||'',`"${rec.description}"`]})
-    dl([h,...r],'financial_records.csv')
+    const toRow = (rec: FinancialRecord) => {
+      const x = rec as Record<string,unknown>
+      return [rec.record_date, rec.type, rec.amount, x.invoice_number||'', x.client_name||'', x.client_issue||'', x.payment_method||'', `"${rec.description}"`]
+    }
+
+    const rows: unknown[][] = []
+    rows.push(h)
+
+    if (revenues.length > 0) {
+      revenues.forEach(r => rows.push(toRow(r)))
+      rows.push(['','','','','','','',''])
+      rows.push(['TOTAL REVENUE','',totalRev,'','','','',''])
+      rows.push(['','','','','','','',''])
+    }
+
+    if (expenses.length > 0) {
+      expenses.forEach(r => rows.push(toRow(r)))
+      rows.push(['','','','','','','',''])
+      rows.push(['TOTAL EXPENSE','',totalExp,'','','','',''])
+    }
+
+    dl(rows, 'financial_records.csv')
   }
   const dl = (rows:unknown[][],name:string) => {
     const csv=rows.map(x=>x.join(',')).join('\n')
@@ -834,7 +859,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
             {/* Add Record + Transaction History */}
             <div className="admin-bottom-grid">
               {/* Form */}
-              <div style={{...CARD, padding:'1.75rem'}}>
+              <div style={{...CARD, padding:'1.75rem', display:'flex', flexDirection:'column'}}>
                 <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'1.5rem'}}>
                   <Plus size={16} style={{color:'var(--gold)'}}/>
                   <p style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700}}>Add Record</p>
@@ -978,7 +1003,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
               </div>
 
               {/* Transaction History */}
-              <div style={{...CARD, overflow:'hidden', display:'flex', flexDirection:'column'}}>
+              <div style={{...CARD, overflow:'hidden', display:'flex', flexDirection:'column', minHeight:0, flex:1}}>
                 <div style={{padding:'1.25rem 1.5rem', borderBottom:'1px solid var(--border)', flexShrink:0}}>
                   <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.875rem'}}>
                     <p style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700}}>Transaction History</p>
@@ -1018,7 +1043,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                   </div>
                 </div>
 
-                <div style={{overflowX:'auto', flex:1, maxHeight:'480px', overflowY:'auto'}}>
+                <div style={{overflowX:'auto', overflowY:'auto', flex:1}}>
                   {filteredRecords.length===0 ? (
                     <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.95rem', padding:'3.5rem', fontFamily:F_BODY}}>No records found</p>
                   ) : (
@@ -1026,7 +1051,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                       <thead style={{position:'sticky', top:0, zIndex:1}}>
                         <tr style={{background:'var(--bg-raised)', borderBottom:'1px solid var(--border)'}}>
                           {['Date','Type','Amount','Invoice','Client','Issue','Payment','Description'].map(h=>(
-                            <th key={h} style={{textAlign:'left', padding:'0.75rem 1rem', fontFamily:F_MONO, fontSize:'0.63rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--text-faint)', fontWeight:500, whiteSpace:'nowrap'}}>{h}</th>
+                            <th key={h} style={{textAlign:'left', padding:'0.75rem 1rem', fontFamily:F_MONO, fontSize:'0.75rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--text-primary)', fontWeight:800, whiteSpace:'nowrap'}}>{h}</th>
                           ))}
                         </tr>
                       </thead>
@@ -1037,18 +1062,18 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                             <tr key={r.id} style={{borderBottom:'1px solid var(--border)'}}
                               onMouseEnter={e=>(e.currentTarget as HTMLTableRowElement).style.background='var(--bg-raised)'}
                               onMouseLeave={e=>(e.currentTarget as HTMLTableRowElement).style.background=''}>
-                              <td style={{padding:'0.875rem 1rem', fontFamily:F_NUM, fontSize:'0.95rem', fontWeight:600, color:'var(--text-primary)', whiteSpace:'nowrap'}}>{format(parseISO(r.record_date),'MMM d, yyyy')}</td>
+                              <td style={{padding:'0.875rem 1rem', fontFamily:F_NUM, fontSize:'0.9rem', fontWeight:400, color:'var(--text-secondary)', whiteSpace:'nowrap'}}>{format(parseISO(r.record_date),'MMM d, yyyy')}</td>
                               <td style={{padding:'0.875rem 1rem'}}>
-                                <span style={{background:r.type==='revenue'?'rgba(22,163,74,0.1)':'rgba(220,38,38,0.1)', color:r.type==='revenue'?'#16A34A':'#DC2626', border:`1px solid ${r.type==='revenue'?'rgba(22,163,74,0.25)':'rgba(220,38,38,0.25)'}`, padding:'0.22rem 0.6rem', borderRadius:'4px', fontFamily:F_MONO, fontSize:'0.68rem', fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase'}}>
+                                <span style={{background:r.type==='revenue'?'rgba(22,163,74,0.1)':'rgba(220,38,38,0.1)', color:r.type==='revenue'?'#16A34A':'#DC2626', border:`1px solid ${r.type==='revenue'?'rgba(22,163,74,0.25)':'rgba(220,38,38,0.25)'}`, padding:'0.22rem 0.6rem', borderRadius:'4px', fontFamily:F_MONO, fontSize:'0.68rem', fontWeight:500, letterSpacing:'0.08em', textTransform:'uppercase'}}>
                                   {r.type}
                                 </span>
                               </td>
-                              <td style={{padding:'0.875rem 1rem', fontFamily:F_NUM, fontSize:'1rem', fontWeight:800, color:r.type==='revenue'?'#16A34A':'#DC2626', whiteSpace:'nowrap'}}>{fmtPHP(r.amount)}</td>
-                              <td style={{padding:'0.875rem 1rem', fontSize:'0.9rem', fontWeight:600, color:'var(--text-secondary)', fontFamily:F_MONO}}>{x.invoice_number||'—'}</td>
-                              <td style={{padding:'0.875rem 1rem', fontSize:'0.95rem', fontWeight:700, color:'var(--text-primary)', fontFamily:F_BODY}}>{x.client_name||'—'}</td>
-                              <td style={{padding:'0.875rem 1rem', fontSize:'0.9rem', fontWeight:600, color:'var(--text-secondary)', fontFamily:F_BODY, maxWidth:'140px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{x.client_issue||'—'}</td>
-                              <td style={{padding:'0.875rem 1rem', fontSize:'0.9rem', fontWeight:600, color:'var(--text-secondary)', fontFamily:F_BODY}}>{x.payment_method||'—'}</td>
-                              <td style={{padding:'0.875rem 1rem', fontSize:'0.9rem', fontWeight:500, color:'var(--text-muted)', fontFamily:F_BODY, maxWidth:'160px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{r.description}</td>
+                              <td style={{padding:'0.875rem 1rem', fontFamily:F_NUM, fontSize:'0.92rem', fontWeight:500, color:r.type==='revenue'?'#16A34A':'#DC2626', whiteSpace:'nowrap'}}>{fmtPHP(r.amount)}</td>
+                              <td style={{padding:'0.875rem 1rem', fontSize:'0.88rem', fontWeight:400, color:'var(--text-muted)', fontFamily:F_MONO}}>{x.invoice_number||'—'}</td>
+                              <td style={{padding:'0.875rem 1rem', fontSize:'0.9rem', fontWeight:400, color:'var(--text-secondary)', fontFamily:F_BODY}}>{x.client_name||'—'}</td>
+                              <td style={{padding:'0.875rem 1rem', fontSize:'0.88rem', fontWeight:400, color:'var(--text-muted)', fontFamily:F_BODY, maxWidth:'140px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{x.client_issue||'—'}</td>
+                              <td style={{padding:'0.875rem 1rem', fontSize:'0.88rem', fontWeight:400, color:'var(--text-muted)', fontFamily:F_BODY}}>{x.payment_method||'—'}</td>
+                              <td style={{padding:'0.875rem 1rem', fontSize:'0.88rem', fontWeight:400, color:'var(--text-muted)', fontFamily:F_BODY, maxWidth:'160px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{r.description}</td>
                             </tr>
                           )
                         })}

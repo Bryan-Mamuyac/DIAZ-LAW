@@ -472,6 +472,7 @@ body::after {
   display: grid;
   grid-template-columns: 380px 1fr;
   gap: 1.25rem;
+  align-items: stretch;
 }
 .admin-nav-tabs {
   display: flex;
