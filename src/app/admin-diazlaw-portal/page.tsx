@@ -15,7 +15,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import toast from 'react-hot-toast'
-import { format, parseISO, startOfMonth } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 
 /* ─────────── CONSTANTS ─────────── */
 const ADMIN_PIN    = '121212'
@@ -345,7 +345,6 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
     const months: Record<string,{month:string;revenue:number;expense:number}> = {}
     records.forEach(r => {
       const key = r.record_date.slice(0,7) // "2026-04"
-      const lbl = format(startOfMonth(parseISO(r.record_date+'-01')), 'MMM yyyy').replace(r.record_date.slice(0,4), r.record_date.slice(2,4))
       const m   = format(parseISO(r.record_date.slice(0,7)+'-01'), 'MMM yy')
       if (!months[key]) months[key] = {month:m, revenue:0, expense:0}
       if (r.type==='revenue') months[key].revenue += r.amount
