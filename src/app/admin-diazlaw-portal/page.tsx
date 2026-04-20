@@ -24,8 +24,6 @@ const THEME_KEY    = 'diazlaw-theme'
 const MAX_ATTEMPTS = 5
 const LOCK_SECS    = 180
 
-const REVENUE_CATS = ['Consultation Fee','Notarial Fee','Legal Representation','Document Drafting','Other Revenue']
-const EXPENSE_CATS = ['Office Supplies','Utilities','Rent','Transportation','Miscellaneous Expense']
 const PAY_METHODS  = ['Cash','GCash','Bank Transfer','Check','Other']
 
 /* ─────────── FONTS ─────────── */
@@ -276,9 +274,8 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
   // Financial form — auto today + auto invoice
   const [finForm, setFinForm] = useState({
     record_date: todayISO(), type: 'revenue' as 'revenue'|'expense',
-    category: '', amount: '', description: '',
-    invoice_number: '', client_name: '', client_issue: '', payment_method: 'Cash',
-  })
+    amount: '', description: '',
+    invoice_number: '', client_name: '', client_issue: '', payment_method: 'Cash',  })
   const [showConfirm,  setShowConfirm]  = useState(false)
   const [finLoading,   setFinLoading]   = useState(false)
   const [clientMode,   setClientMode]   = useState<'dropdown'|'manual'>('dropdown')
@@ -395,7 +392,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
     const rec = {
       record_date:    finForm.record_date,
       type:           finForm.type,
-      category:       finForm.category,
+      category:       '',
       amount:         parseFloat(finForm.amount),
       description:    finForm.description,
       invoice_number: finForm.invoice_number||null,
@@ -407,7 +404,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
     if (!error) {
       toast.success('Record saved!')
       const nextCount = records.length + 1
-      setFinForm({ record_date:todayISO(), type:'revenue', category:'', amount:'', description:'', invoice_number:generateInvoice(nextCount), client_name:'', client_issue:'', payment_method:'Cash' })
+      setFinForm({ record_date:todayISO(), type:'revenue', amount:'', description:'', invoice_number:generateInvoice(nextCount), client_name:'', client_issue:'', payment_method:'Cash' })
       setShowConfirm(false)
       fetchAll()
     } else { toast.error('Failed to save.') }
@@ -420,8 +417,8 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
     dl([h,...r],'appointments.csv')
   }
   const exportFinCSV = () => {
-    const h = ['Date','Type','Category','Amount','Invoice','Client','Issue','Payment','Description']
-    const r = filteredRecords.map(rec=>{const x=rec as Record<string,unknown>; return [rec.record_date,rec.type,rec.category,rec.amount,x.invoice_number||'',x.client_name||'',x.client_issue||'',x.payment_method||'',`"${rec.description}"`]})
+    const h = ['Date','Type','Amount','Invoice','Client','Issue','Payment','Description']
+    const r = filteredRecords.map(rec=>{const x=rec as Record<string,unknown>; return [rec.record_date,rec.type,rec.amount,x.invoice_number||'',x.client_name||'',x.client_issue||'',x.payment_method||'',`"${rec.description}"`]})
     dl([h,...r],'financial_records.csv')
   }
   const dl = (rows:unknown[][],name:string) => {
@@ -709,7 +706,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                     <div style={{display:'flex', gap:'8px'}}>
                       {(['revenue','expense'] as const).map(t=>(
                         <button key={t} type="button"
-                          onClick={()=>{setFinForm(p=>({...p,type:t,category:'',client_name:'',client_issue:''})); setClientMode('dropdown')}}
+                          onClick={()=>{setFinForm(p=>({...p,type:t,client_name:'',client_issue:''})); setClientMode('dropdown')}}
                           style={{flex:1, padding:'0.65rem', borderRadius:'8px', fontFamily:F_MONO, fontSize:'0.72rem', fontWeight:600, letterSpacing:'0.08em', textTransform:'uppercase', cursor:'pointer', transition:'all 0.15s', background:finForm.type===t?(t==='revenue'?'rgba(22,163,74,0.15)':'rgba(220,38,38,0.12)'):'var(--bg-raised)', color:finForm.type===t?(t==='revenue'?'#16A34A':'#DC2626'):'var(--text-muted)', border:`1px solid ${finForm.type===t?(t==='revenue'?'rgba(22,163,74,0.3)':'rgba(220,38,38,0.3)'):'var(--border)'}`}}>
                           {t}
                         </button>
@@ -779,18 +776,6 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                     </>
                   )}
 
-                  {/* Category */}
-                  <div>
-                    <label style={LBL}>Category</label>
-                    <div style={{position:'relative'}}>
-                      <select value={finForm.category} onChange={e=>setFinForm(p=>({...p,category:e.target.value}))}
-                        className="input-luxury" style={{fontSize:'0.95rem', paddingRight:'2.25rem', appearance:'none', cursor:'pointer', width:'100%'}}>
-                        <option value="">— Select —</option>
-                        {(finForm.type==='revenue'?REVENUE_CATS:EXPENSE_CATS).map(c=><option key={c} value={c}>{c}</option>)}
-                      </select>
-                      <ChevronDown size={13} style={{position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color:'var(--text-faint)'}}/>
-                    </div>
-                  </div>
 
                   {/* Amount */}
                   <div>
@@ -829,7 +814,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                   </div>
 
                   <button onClick={()=>{
-                    if (!finForm.record_date||!finForm.category||!finForm.amount||!finForm.description) { toast.error('Please fill in all required fields.'); return }
+                    if (!finForm.record_date||!finForm.amount||!finForm.description) { toast.error('Please fill in all required fields.'); return }
                     setShowConfirm(true)
                   }} className="btn-gold" style={{width:'100%', justifyContent:'center', fontSize:'0.9rem', padding:'0.85rem', marginTop:'0.25rem'}}>
                     <Plus size={15}/> Review & Save
@@ -885,7 +870,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                     <table style={{width:'100%', borderCollapse:'collapse'}}>
                       <thead style={{position:'sticky', top:0, zIndex:1}}>
                         <tr style={{background:'var(--bg-raised)', borderBottom:'1px solid var(--border)'}}>
-                          {['Date','Type','Category','Amount','Invoice','Client','Issue','Payment','Description'].map(h=>(
+                          {['Date','Type','Amount','Invoice','Client','Issue','Payment','Description'].map(h=>(
                             <th key={h} style={{textAlign:'left', padding:'0.75rem 1rem', fontFamily:F_MONO, fontSize:'0.63rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--text-faint)', fontWeight:500, whiteSpace:'nowrap'}}>{h}</th>
                           ))}
                         </tr>
@@ -903,7 +888,6 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                                   {r.type}
                                 </span>
                               </td>
-                              <td style={{padding:'0.875rem 1rem', fontSize:'0.9rem', color:'var(--text-secondary)', fontFamily:F_BODY}}>{r.category}</td>
                               <td style={{padding:'0.875rem 1rem', fontFamily:F_NUM, fontSize:'0.9rem', fontWeight:700, color:r.type==='revenue'?'#16A34A':'#DC2626', whiteSpace:'nowrap'}}>{fmtPHP(r.amount)}</td>
                               <td style={{padding:'0.875rem 1rem', fontSize:'0.85rem', color:'var(--text-muted)', fontFamily:F_MONO}}>{x.invoice_number||'—'}</td>
                               <td style={{padding:'0.875rem 1rem', fontSize:'0.9rem', color:'var(--text-secondary)', fontFamily:F_BODY}}>{x.client_name||'—'}</td>
@@ -1036,7 +1020,6 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                 {[
                   ['Date',       formatDateDisplay(finForm.record_date)],
                   ['Type',       finForm.type.toUpperCase()],
-                  ['Category',   finForm.category],
                   ['Amount',     `₱${parseFloat(finForm.amount||'0').toLocaleString('en-PH',{minimumFractionDigits:2})}`],
                   ['Invoice No.',finForm.invoice_number||'—'],
                   ...(finForm.type==='revenue'?[['Client',finForm.client_name||'—'],['Issue',finForm.client_issue||'—']]:[]),
