@@ -279,8 +279,9 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
     category: '', amount: '', description: '',
     invoice_number: '', client_name: '', client_issue: '', payment_method: 'Cash',
   })
-  const [showConfirm, setShowConfirm] = useState(false)
-  const [finLoading,  setFinLoading]  = useState(false)
+  const [showConfirm,  setShowConfirm]  = useState(false)
+  const [finLoading,   setFinLoading]   = useState(false)
+  const [clientMode,   setClientMode]   = useState<'dropdown'|'manual'>('dropdown')
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -345,7 +346,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
     const months: Record<string,{month:string;revenue:number;expense:number}> = {}
     records.forEach(r => {
       const key = r.record_date.slice(0,7) // "2026-04"
-      const m   = format(parseISO(r.record_date.slice(0,7)+'-01'), 'MMM yy')
+      const m   = format(parseISO(r.record_date.slice(0,7)+'-01'), "MMM ''yy")
       if (!months[key]) months[key] = {month:m, revenue:0, expense:0}
       if (r.type==='revenue') months[key].revenue += r.amount
       else months[key].expense += r.amount
@@ -707,7 +708,8 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                     <label style={LBL}>Type</label>
                     <div style={{display:'flex', gap:'8px'}}>
                       {(['revenue','expense'] as const).map(t=>(
-                        <button key={t} type="button" onClick={()=>setFinForm(p=>({...p,type:t,category:'',client_name:'',client_issue:''}))}
+                        <button key={t} type="button"
+                          onClick={()=>{setFinForm(p=>({...p,type:t,category:'',client_name:'',client_issue:''})); setClientMode('dropdown')}}
                           style={{flex:1, padding:'0.65rem', borderRadius:'8px', fontFamily:F_MONO, fontSize:'0.72rem', fontWeight:600, letterSpacing:'0.08em', textTransform:'uppercase', cursor:'pointer', transition:'all 0.15s', background:finForm.type===t?(t==='revenue'?'rgba(22,163,74,0.15)':'rgba(220,38,38,0.12)'):'var(--bg-raised)', color:finForm.type===t?(t==='revenue'?'#16A34A':'#DC2626'):'var(--text-muted)', border:`1px solid ${finForm.type===t?(t==='revenue'?'rgba(22,163,74,0.3)':'rgba(220,38,38,0.3)'):'var(--border)'}`}}>
                           {t}
                         </button>
@@ -715,33 +717,64 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                     </div>
                   </div>
 
-                  {/* Client Name — Revenue only, dropdown from completed appts */}
+                  {/* Client Name — Revenue only, dropdown OR manual walk-in */}
                   {finForm.type==='revenue'&&(
                     <>
                       <div>
-                        <label style={LBL}>Client Name {completedAppts.length===0&&<span style={{color:'var(--text-faint)', textTransform:'none', letterSpacing:'normal', fontSize:'0.72rem'}}>(no completed appts yet)</span>}</label>
-                        <div style={{position:'relative'}}>
-                          <select value={finForm.client_name}
-                            onChange={e=>{
-                              const name=e.target.value
-                              const appt=completedAppts.find(a=>`${a.first_name} ${a.last_name}`===name)
-                              setFinForm(p=>({...p, client_name:name, client_issue:appt?.issue_type||''}))
-                            }}
-                            className="input-luxury" style={{fontSize:'0.95rem', paddingRight:'2.25rem', appearance:'none', cursor:'pointer', width:'100%'}}>
-                            <option value="">— Select client —</option>
-                            {completedAppts.map(a=>{
-                              const full=`${a.first_name} ${a.last_name}`
-                              return <option key={a.id} value={full}>{full}</option>
-                            })}
-                          </select>
-                          <ChevronDown size={13} style={{position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color:'var(--text-faint)'}}/>
+                        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.5rem'}}>
+                          <label style={{...LBL, marginBottom:0}}>Client Name</label>
+                          <div style={{display:'flex', borderRadius:'6px', overflow:'hidden', border:'1px solid var(--border)'}}>
+                            {(['dropdown','manual'] as const).map(mode=>(
+                              <button key={mode} type="button"
+                                onClick={()=>{ setClientMode(mode); setFinForm(p=>({...p,client_name:'',client_issue:''})) }}
+                                style={{padding:'0.25rem 0.65rem', fontFamily:F_MONO, fontSize:'0.6rem', letterSpacing:'0.08em', textTransform:'uppercase', cursor:'pointer', border:'none', transition:'all 0.15s',
+                                  background: clientMode===mode ? 'var(--gold)' : 'var(--bg-raised)',
+                                  color:       clientMode===mode ? '#fff'        : 'var(--text-faint)',
+                                }}>
+                                {mode==='dropdown' ? 'From Appt' : 'Walk-in'}
+                              </button>
+                            ))}
+                          </div>
                         </div>
+                        {clientMode==='dropdown' ? (
+                          <div style={{position:'relative'}}>
+                            <select value={finForm.client_name}
+                              onChange={e=>{
+                                const name=e.target.value
+                                const appt=completedAppts.find(a=>`${a.first_name} ${a.last_name}`===name)
+                                setFinForm(p=>({...p, client_name:name, client_issue:appt?.issue_type||''}))
+                              }}
+                              className="input-luxury" style={{fontSize:'0.95rem', paddingRight:'2.25rem', appearance:'none', cursor:'pointer', width:'100%'}}>
+                              <option value="">— Select client —</option>
+                              {completedAppts.length===0
+                                ? <option disabled>No completed appointments yet</option>
+                                : completedAppts.map(a=>{
+                                    const full=`${a.first_name} ${a.last_name}`
+                                    return <option key={a.id} value={full}>{full}</option>
+                                  })
+                              }
+                            </select>
+                            <ChevronDown size={13} style={{position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color:'var(--text-faint)'}}/>
+                          </div>
+                        ) : (
+                          <input type="text" placeholder="Enter client full name (walk-in)…"
+                            value={finForm.client_name}
+                            onChange={e=>setFinForm(p=>({...p, client_name:e.target.value}))}
+                            className="input-luxury" style={{fontSize:'0.95rem'}}/>
+                        )}
                       </div>
-                      {/* Appointment / Issue Type — auto-filled, read-only */}
+                      {/* Appointment / Issue Type — auto-filled for dropdown, editable for walk-in */}
                       <div>
                         <label style={LBL}>Appointment / Issue Type</label>
-                        <input type="text" value={finForm.client_issue} readOnly placeholder="Auto-filled from appointment…"
-                          className="input-luxury" style={{fontSize:'0.95rem', opacity: finForm.client_issue?1:0.6, cursor:'default'}}/>
+                        {clientMode==='dropdown' ? (
+                          <input type="text" value={finForm.client_issue} readOnly placeholder="Auto-filled from appointment…"
+                            className="input-luxury" style={{fontSize:'0.95rem', opacity: finForm.client_issue?1:0.6, cursor:'default'}}/>
+                        ) : (
+                          <input type="text" placeholder="e.g. Property Dispute, Notarization…"
+                            value={finForm.client_issue}
+                            onChange={e=>setFinForm(p=>({...p, client_issue:e.target.value}))}
+                            className="input-luxury" style={{fontSize:'0.95rem'}}/>
+                        )}
                       </div>
                     </>
                   )}
