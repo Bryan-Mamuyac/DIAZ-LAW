@@ -25,7 +25,6 @@ const LOCK_SECS    = 180
 const PAY_METHODS  = ['Cash','GCash','Bank Transfer','Check','Other']
 
 /* ─────────── FONTS ─────────── */
-// Use Inter for numbers and DM Sans for body — clear, readable
 const F_BODY   = "'Inter', 'DM Sans', sans-serif"
 const F_NUM    = "'Inter', 'DM Sans', sans-serif"
 const F_MONO   = "'DM Mono', 'Courier New', monospace"
@@ -60,7 +59,6 @@ function formatDateDisplay(iso: string) {
   try { return format(parseISO(iso), 'EEEE, MMMM d, yyyy') } catch { return iso }
 }
 
-/** Generate INV-YYYY-NNN based on count */
 function generateInvoice(count: number): string {
   const yr  = new Date().getFullYear()
   const seq = String(count + 1).padStart(3, '0')
@@ -68,10 +66,10 @@ function generateInvoice(count: number): string {
 }
 
 /* ══════════════════════════════════════
-   ICON BUTTON
+   ICON BUTTON — theme-aware
 ══════════════════════════════════════ */
-function IconBtn({ icon, label, onClick, danger=false }: {
-  icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean
+function IconBtn({ icon, label, onClick, danger=false, isDark }: {
+  icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean; isDark: boolean
 }) {
   const [hov, setHov] = useState(false)
   return (
@@ -80,11 +78,23 @@ function IconBtn({ icon, label, onClick, danger=false }: {
       style={{
         display:'flex', flexDirection:'column', alignItems:'center', gap:'3px',
         padding:'0.375rem 0.625rem', borderRadius:'8px', cursor:'pointer', border:'none',
-        background: danger ? (hov?'rgba(239,68,68,0.22)':'rgba(239,68,68,0.1)') : (hov?'rgba(255,255,255,0.12)':'rgba(255,255,255,0.06)'),
+        background: danger
+          ? (hov ? 'rgba(239,68,68,0.22)' : 'rgba(239,68,68,0.1)')
+          : isDark
+            ? (hov ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.06)')
+            : (hov ? 'rgba(10,14,26,0.1)' : 'rgba(10,14,26,0.05)'),
         transition:'background 0.2s', minWidth:'48px',
       }}>
-      <span style={{color: danger?'#fca5a5':'rgba(237,232,222,0.75)', display:'flex'}}>{icon}</span>
-      <span style={{fontFamily:F_MONO, fontSize:'0.52rem', letterSpacing:'0.12em', textTransform:'uppercase', color: danger?'rgba(252,165,165,0.75)':'rgba(201,168,76,0.7)', lineHeight:1, whiteSpace:'nowrap'}}>{label}</span>
+      <span style={{
+        color: danger ? '#ef4444' : isDark ? 'rgba(237,232,222,0.75)' : 'rgba(10,14,26,0.65)',
+        display:'flex'
+      }}>{icon}</span>
+      <span style={{
+        fontFamily:F_MONO, fontSize:'0.52rem', letterSpacing:'0.12em',
+        textTransform:'uppercase',
+        color: danger ? 'rgba(239,68,68,0.75)' : isDark ? 'rgba(201,168,76,0.7)' : 'rgba(184,146,42,0.85)',
+        lineHeight:1, whiteSpace:'nowrap'
+      }}>{label}</span>
     </button>
   )
 }
@@ -94,7 +104,6 @@ function IconBtn({ icon, label, onClick, danger=false }: {
 ══════════════════════════════════ */
 type ChartPoint = { month: string; revenue: number; expense: number }
 
-
 function CustomLineChart({ data, fmtPHP, isDark }: { data: ChartPoint[]; fmtPHP: (n:number)=>string; isDark: boolean }) {
   const [tooltip, setTooltip] = useState<{x:number;d:ChartPoint}|null>(null)
   const W = 480, H = 210, PL = 60, PR = 20, PT = 16, PB = 36
@@ -103,7 +112,6 @@ function CustomLineChart({ data, fmtPHP, isDark }: { data: ChartPoint[]; fmtPHP:
   const niceMax = Math.ceil(maxVal / 1000) * 1000 || 1000
   const yTicks = 5
   const single = data.length === 1
-  // For single point: center it; for multiple: spread across full width
   const px = (i: number) => single ? PL + cW / 2 : PL + (i / (data.length - 1)) * cW
   const py = (v: number) => PT + cH - (v / niceMax) * cH
   const lineD = (key: 'revenue'|'expense') =>
@@ -114,7 +122,6 @@ function CustomLineChart({ data, fmtPHP, isDark }: { data: ChartPoint[]; fmtPHP:
   return (
     <div style={{position:'relative', userSelect:'none'}}>
       <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%', height:'auto', display:'block'}}>
-        {/* Y grid + labels */}
         {Array.from({length:yTicks+1},(_,i)=>{
           const v = (niceMax/yTicks)*i
           const y = py(v)
@@ -127,28 +134,23 @@ function CustomLineChart({ data, fmtPHP, isDark }: { data: ChartPoint[]; fmtPHP:
             </g>
           )
         })}
-        {/* X labels */}
         {data.map((d,i)=>(
           <text key={i} x={px(i)} y={H-8} textAnchor="middle" fontSize={10} fill={tc} fontFamily="Inter,sans-serif">{d.month}</text>
         ))}
-        {/* Lines (hidden for single point) */}
         {!single && <>
           <path d={lineD('revenue')} fill="none" stroke="#C9A84C" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"/>
           <path d={lineD('expense')} fill="none" stroke="#E8707D" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"/>
         </>}
-        {/* Dots */}
         {data.map((d,i)=>(
           <g key={i}>
             <circle cx={px(i)} cy={py(d.revenue)} r={5} fill="#C9A84C" stroke={isDark?'#0C1120':'#fff'} strokeWidth={2}/>
             <circle cx={px(i)} cy={py(d.expense)}  r={5} fill="#E8707D" stroke={isDark?'#0C1120':'#fff'} strokeWidth={2}/>
-            {/* Value labels on dots */}
             <text x={px(i)} y={py(d.revenue)-10} textAnchor="middle" fontSize={9} fill="#C9A84C" fontFamily="Inter,sans-serif" fontWeight="600">
               {d.revenue>=1000?`₱${(d.revenue/1000).toFixed(0)}k`:`₱${d.revenue}`}
             </text>
             <text x={px(i)} y={py(d.expense)+18} textAnchor="middle" fontSize={9} fill="#E8707D" fontFamily="Inter,sans-serif" fontWeight="600">
               {d.expense>=1000?`₱${(d.expense/1000).toFixed(0)}k`:`₱${d.expense}`}
             </text>
-            {/* Hover zone */}
             <rect x={px(i)-24} y={PT} width={48} height={cH} fill="transparent"
               onMouseEnter={()=>setTooltip({x:px(i),d})}
               onMouseLeave={()=>setTooltip(null)} style={{cursor:'crosshair'}}/>
@@ -185,7 +187,6 @@ function CustomBarChart({ data, fmtPHP, isDark }: { data: ChartPoint[]; fmtPHP: 
   const niceMax = Math.ceil(maxVal / 1000) * 1000 || 1000
   const yTicks = 5
   const groupW = cW / data.length
-  // Wider bars for single point, capped for many
   const barW = Math.min(Math.max(groupW * 0.3, 18), 44)
   const gap = 6
 
@@ -218,17 +219,13 @@ function CustomBarChart({ data, fmtPHP, isDark }: { data: ChartPoint[]; fmtPHP: 
           const eh = Math.max(bh(d.expense), d.expense>0?4:0)
           return (
             <g key={i}>
-              {/* Revenue bar */}
               <rect x={bx(i,0)} y={by(d.revenue)} width={barW} height={rh} fill="#C9A84C" rx={3}
                 opacity={tooltip && tooltip.i!==i ? 0.4 : 1}/>
-              {/* Revenue label above bar */}
               {d.revenue > 0 && <text x={bx(i,0)+barW/2} y={by(d.revenue)-4} textAnchor="middle" fontSize={9} fill="#C9A84C" fontFamily="Inter,sans-serif" fontWeight="600">
                 {d.revenue>=1000?`₱${(d.revenue/1000).toFixed(0)}k`:`₱${d.revenue}`}
               </text>}
-              {/* Expense bar */}
               <rect x={bx(i,1)} y={by(d.expense)} width={barW} height={eh} fill="#E8707D" rx={3}
                 opacity={tooltip && tooltip.i!==i ? 0.4 : 1}/>
-              {/* Expense label above bar */}
               {d.expense > 0 && <text x={bx(i,1)+barW/2} y={by(d.expense)-4} textAnchor="middle" fontSize={9} fill="#E8707D" fontFamily="Inter,sans-serif" fontWeight="600">
                 {d.expense>=1000?`₱${(d.expense/1000).toFixed(0)}k`:`₱${d.expense}`}
               </text>}
@@ -312,6 +309,16 @@ function PinScreen({ onSuccess }: { onSuccess: () => void }) {
   const KEYS = ['1','2','3','4','5','6','7','8','9','','0','del']
   const mins = Math.floor(timer/60); const secs = timer%60
 
+  /* ── Theme-aware nav colors ── */
+  const navBg      = isDark ? '#0A1628' : '#FFFFFF'
+  const navBorder  = isDark ? 'rgba(201,168,76,0.18)' : 'rgba(184,146,42,0.22)'
+  const navShadow  = isDark ? '0 2px 20px rgba(0,0,0,0.35)' : '0 2px 12px rgba(10,14,26,0.08)'
+  const brandTitle = isDark ? '#EDE8DE' : '#0A1628'
+  const brandSub   = isDark ? 'rgba(201,168,76,0.65)' : 'rgba(184,146,42,0.8)'
+  const iconBg     = isDark ? 'rgba(201,168,76,0.15)' : 'rgba(184,146,42,0.1)'
+  const iconBorder = isDark ? 'rgba(201,168,76,0.32)' : 'rgba(184,146,42,0.3)'
+
+  /* ── Body card colors ── */
   const bg   = isDark ? '#07090F' : '#F7F5F0'
   const card = isDark ? '#0C1120' : '#FFFFFF'
   const brd  = isDark ? 'rgba(201,168,76,0.2)' : 'rgba(184,146,42,0.22)'
@@ -323,18 +330,26 @@ function PinScreen({ onSuccess }: { onSuccess: () => void }) {
       onClick={() => inputRef.current?.focus()}>
       <style>{`@keyframes pinShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-10px)}40%{transform:translateX(10px)}60%{transform:translateX(-7px)}80%{transform:translateX(7px)}}.pin-shake{animation:pinShake 0.5s ease;}`}</style>
 
-      {/* Navbar */}
-      <header style={{height:'68px', background:'#0A1628', borderBottom:'1px solid rgba(201,168,76,0.18)', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 2.5rem', flexShrink:0, boxShadow:'0 2px 20px rgba(0,0,0,0.35)'}}>
+      {/* ── NAVBAR — theme-aware ── */}
+      <header style={{
+        height:'68px',
+        background: navBg,
+        borderBottom:`1px solid ${navBorder}`,
+        display:'flex', alignItems:'center', justifyContent:'space-between',
+        padding:'0 2.5rem', flexShrink:0,
+        boxShadow: navShadow,
+        transition:'background 0.35s ease, border-color 0.35s ease',
+      }}>
         <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-          <div style={{width:'36px', height:'36px', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(201,168,76,0.15)', border:'1px solid rgba(201,168,76,0.32)'}}>
+          <div style={{width:'36px', height:'36px', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', background: iconBg, border:`1px solid ${iconBorder}`}}>
             <Scale size={17} color="#C9A84C"/>
           </div>
           <div style={{lineHeight:1}}>
-            <div style={{fontFamily:F_SERIF, fontWeight:600, fontSize:'1rem', color:'#EDE8DE', letterSpacing:'0.05em'}}>DIAZ LAW OFFICE</div>
-            <div style={{fontFamily:F_MONO, fontSize:'0.52rem', letterSpacing:'0.18em', textTransform:'uppercase', color:'rgba(201,168,76,0.65)', marginTop:'3px'}}>Admin Portal</div>
+            <div style={{fontFamily:F_SERIF, fontWeight:600, fontSize:'1rem', color: brandTitle, letterSpacing:'0.05em', transition:'color 0.35s ease'}}> DIAZ LAW OFFICE</div>
+            <div style={{fontFamily:F_MONO, fontSize:'0.52rem', letterSpacing:'0.18em', textTransform:'uppercase', color: brandSub, marginTop:'3px', transition:'color 0.35s ease'}}>Admin Portal</div>
           </div>
         </div>
-        {mounted && <IconBtn icon={isDark?<Sun size={15}/>:<Moon size={15}/>} label={isDark?'Dark':'Light'} onClick={toggle}/>}
+        {mounted && <IconBtn icon={isDark?<Sun size={15}/>:<Moon size={15}/>} label={isDark?'Dark':'Light'} onClick={toggle} isDark={isDark}/>}
       </header>
 
       {/* PIN body */}
@@ -425,11 +440,12 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
   const [finTypeFilter,  setFinTypeFilter]  = useState<'all'|'revenue'|'expense'>('all')
   const [finMonthFilter, setFinMonthFilter] = useState<string>('all')
 
-  // Financial form — auto today + auto invoice
+  // Financial form
   const [finForm, setFinForm] = useState({
     record_date: todayISO(), type: 'revenue' as 'revenue'|'expense',
     amount: '', description: '',
-    invoice_number: '', client_name: '', client_issue: '', payment_method: 'Cash',  })
+    invoice_number: '', client_name: '', client_issue: '', payment_method: 'Cash',
+  })
   const [showConfirm,  setShowConfirm]  = useState(false)
   const [finLoading,   setFinLoading]   = useState(false)
   const [clientMode,   setClientMode]   = useState<'dropdown'|'manual'>('dropdown')
@@ -445,7 +461,6 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
     setMsgs((m as ContactMessage[])||[])
     const recs = (r as FinancialRecord[])||[]
     setRecords(recs)
-    // Auto-generate invoice number based on existing count
     const nextInv = generateInvoice(recs.length)
     setFinForm(p => ({ ...p, invoice_number: nextInv }))
     setLoading(false)
@@ -453,7 +468,6 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
-  // Completed appointments for client dropdown
   const completedAppts = useMemo(
     () => appts.filter(a => a.status === 'completed'),
     [appts]
@@ -476,7 +490,6 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
   const totalExpense = records.filter(r=>r.type==='expense').reduce((s,r)=>s+r.amount,0)
   const netIncome    = totalRevenue - totalExpense
 
-  // Filtered financial records
   const filteredRecords = useMemo(() => {
     return records.filter(r => {
       const typeOk  = finTypeFilter==='all' || r.type===finTypeFilter
@@ -485,18 +498,16 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
     })
   }, [records, finTypeFilter, finMonthFilter])
 
-  // Month options from records
   const monthOptions = useMemo(() => {
     const seen = new Set<string>()
     records.forEach(r => seen.add(r.record_date.slice(0,7)))
     return Array.from(seen).sort().reverse()
   }, [records])
 
-  // Chart data — day by day
   const chartData = useMemo(() => {
     const days: Record<string,{month:string;revenue:number;expense:number}> = {}
     filteredRecords.forEach(r => {
-      const key = r.record_date // "2026-04-20"
+      const key = r.record_date
       const label = format(parseISO(r.record_date), 'MMM d')
       if (!days[key]) days[key] = {month:label, revenue:0, expense:0}
       if (r.type==='revenue') days[key].revenue += r.amount
@@ -530,13 +541,12 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
   }
   const deleteMsg = async (id:string) => {
     if (!confirm('Delete this message permanently?')) return
-    // Optimistic update first
     setMsgs(p=>p.filter(m=>m.id!==id))
     if (selMsg?.id===id) setSelMsg(null)
     const { error } = await supabase.from('contact_messages').delete().eq('id',id)
     if (error) {
       toast.error('Delete failed — check Supabase RLS policy.')
-      fetchAll() // revert on error
+      fetchAll()
     } else {
       toast.success('Message deleted.')
     }
@@ -571,7 +581,6 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
     dl([h,...r],'appointments.csv')
   }
   const exportFinCSV = () => {
-    // ── Smart filename ──────────────────────────────
     const year = finMonthFilter !== 'all' ? finMonthFilter.slice(0,4) : new Date().getFullYear().toString()
     const monthName = finMonthFilter !== 'all'
       ? format(parseISO(finMonthFilter+'-01'), 'MMMM').toLowerCase()
@@ -585,7 +594,6 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
     if (finMonthFilter !== 'all' && finTypeFilter === 'all')
       filename = `revenue_expense_${suffix}.xlsx`
 
-    // ── Row builder ─────────────────────────────────
     const HEADERS = ['Date','Type','Amount','Invoice','Client','Issue','Payment','Description']
     const toRow = (rec: FinancialRecord) => {
       const x = rec as Record<string,unknown>
@@ -608,22 +616,17 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
 
     const wb = XLSX.utils.book_new()
 
-    // ── Revenue sheet ───────────────────────────────
     if (finTypeFilter !== 'expense') {
       const revRows = revenues.map(toRow)
       const revSheet = XLSX.utils.json_to_sheet(revRows, {header: HEADERS})
-      // Total row
-      const totalRowIdx = revRows.length + 2
       XLSX.utils.sheet_add_aoa(revSheet, [
         ['','','','','','','',''],
         ['TOTAL REVENUE','', totalRev,'','','','',''],
       ], {origin: revRows.length + 1})
-      // Bold the total row via cell styles (basic)
       revSheet['!cols'] = [{wch:14},{wch:10},{wch:14},{wch:16},{wch:20},{wch:18},{wch:12},{wch:24}]
       XLSX.utils.book_append_sheet(wb, revSheet, 'Revenue')
     }
 
-    // ── Expense sheet ───────────────────────────────
     if (finTypeFilter !== 'revenue') {
       const expRows = expenses.map(toRow)
       const expSheet = XLSX.utils.json_to_sheet(expRows, {header: HEADERS})
@@ -635,7 +638,6 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
       XLSX.utils.book_append_sheet(wb, expSheet, 'Expense')
     }
 
-    // ── Summary sheet (only when exporting both) ────
     if (finTypeFilter === 'all') {
       const summaryData = [
         {Label:'Total Revenue', Amount: totalRev},
@@ -658,6 +660,19 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
 
   const fmtPHP = (n:number) => `₱${n.toLocaleString('en-PH',{minimumFractionDigits:2})}`
 
+  /* ── Theme-aware navbar values ── */
+  const navBg         = isDark ? '#0A1628' : '#FFFFFF'
+  const navBorder     = isDark ? 'rgba(201,168,76,0.2)'  : 'rgba(184,146,42,0.22)'
+  const navShadow     = isDark ? '0 2px 20px rgba(0,0,0,0.4)' : '0 2px 12px rgba(10,14,26,0.08)'
+  const brandTitle    = isDark ? '#EDE8DE' : '#0A1628'
+  const brandSub      = isDark ? 'rgba(201,168,76,0.65)' : 'rgba(184,146,42,0.8)'
+  const iconBg        = isDark ? 'rgba(201,168,76,0.15)' : 'rgba(184,146,42,0.1)'
+  const iconBorder    = isDark ? 'rgba(201,168,76,0.32)' : 'rgba(184,146,42,0.3)'
+  const tabInactiveColor = isDark ? 'rgba(237,232,222,0.6)' : 'rgba(10,14,26,0.55)'
+  const tabInactiveBg    = 'transparent'
+  const tabActiveBg      = isDark ? 'rgba(201,168,76,0.18)' : 'rgba(184,146,42,0.1)'
+  const tabActiveBorder  = isDark ? 'rgba(201,168,76,0.32)' : 'rgba(184,146,42,0.35)'
+
   // Shared styles
   const CARD: React.CSSProperties = {background:'var(--bg-surface)', border:'1px solid var(--border)', borderRadius:'16px', boxShadow:'var(--shadow-md)'}
   const LBL:  React.CSSProperties = {fontFamily:F_MONO, fontSize:'0.68rem', letterSpacing:'0.14em', textTransform:'uppercase', color:'var(--text-muted)', display:'block', marginBottom:'0.5rem'}
@@ -667,38 +682,61 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
   return (
     <div style={{minHeight:'100vh', background:'var(--bg-canvas)'}}>
 
-      {/* ══ NAVBAR ══ */}
-      <header style={{height:'68px', position:'sticky', top:0, zIndex:50, background:'#0A1628', borderBottom:'1px solid rgba(201,168,76,0.2)', boxShadow:'0 2px 20px rgba(0,0,0,0.4)', display:'flex', alignItems:'center', minHeight:'56px'}}>
+      {/* ══ NAVBAR — fully theme-aware ══ */}
+      <header style={{
+        height:'68px', position:'sticky', top:0, zIndex:50,
+        background: navBg,
+        borderBottom:`1px solid ${navBorder}`,
+        boxShadow: navShadow,
+        display:'flex', alignItems:'center', minHeight:'56px',
+        transition:'background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease',
+      }}>
         <div className="admin-header-inner">
           {/* Brand */}
           <div style={{display:'flex', alignItems:'center', gap:'10px', flexShrink:0}}>
-            <div style={{width:'36px', height:'36px', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(201,168,76,0.15)', border:'1px solid rgba(201,168,76,0.32)'}}>
+            <div style={{width:'36px', height:'36px', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', background: iconBg, border:`1px solid ${iconBorder}`, transition:'background 0.35s ease'}}>
               <Scale size={17} color="#C9A84C"/>
             </div>
             <div style={{lineHeight:1}}>
-              <div style={{fontFamily:F_SERIF, fontWeight:600, fontSize:'1rem', color:'#EDE8DE', letterSpacing:'0.05em'}}>DIAZ LAW OFFICE</div>
-              <div className="admin-brand-subtitle" style={{fontFamily:F_MONO, fontSize:'0.52rem', letterSpacing:'0.18em', textTransform:'uppercase', color:'rgba(201,168,76,0.65)', marginTop:'3px'}}>Admin Portal</div>
+              <div style={{fontFamily:F_SERIF, fontWeight:600, fontSize:'1rem', color: brandTitle, letterSpacing:'0.05em', transition:'color 0.35s ease'}}>DIAZ LAW OFFICE</div>
+              <div className="admin-brand-subtitle" style={{fontFamily:F_MONO, fontSize:'0.52rem', letterSpacing:'0.18em', textTransform:'uppercase', color: brandSub, marginTop:'3px', transition:'color 0.35s ease'}}>Admin Portal</div>
             </div>
           </div>
 
           {/* Nav tabs */}
           <nav className="admin-nav-tabs">
             <div style={{position:'relative'}}>
-              <button onClick={()=>setTab('appointments')} style={{display:'flex', alignItems:'center', gap:'7px', padding:'0.45rem 0.875rem', borderRadius:'8px', cursor:'pointer', fontFamily:F_BODY, fontSize:'0.85rem', fontWeight:500, transition:'all 0.2s', background:tab==='appointments'?'rgba(201,168,76,0.18)':'transparent', color:tab==='appointments'?'#C9A84C':'rgba(237,232,222,0.65)', border:`1px solid ${tab==='appointments'?'rgba(201,168,76,0.32)':'transparent'}`}}>
+              <button onClick={()=>setTab('appointments')} style={{
+                display:'flex', alignItems:'center', gap:'7px',
+                padding:'0.45rem 0.875rem', borderRadius:'8px', cursor:'pointer',
+                fontFamily:F_BODY, fontSize:'0.85rem', fontWeight:500,
+                transition:'all 0.2s',
+                background: tab==='appointments' ? tabActiveBg : tabInactiveBg,
+                color: tab==='appointments' ? '#C9A84C' : tabInactiveColor,
+                border:`1px solid ${tab==='appointments' ? tabActiveBorder : 'transparent'}`,
+              }}>
                 <LayoutDashboard size={13}/> <span className="admin-brand-subtitle">Appointments</span>
               </button>
-              {totalBadge>0&&<span style={{position:'absolute', top:'-7px', right:'-7px', background:'#ef4444', color:'#fff', borderRadius:'50%', width:'18px', height:'18px', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:F_NUM, fontSize:'0.7rem', fontWeight:700, border:'2px solid #0A1628'}}>{totalBadge}</span>}
+              {totalBadge>0&&<span style={{position:'absolute', top:'-7px', right:'-7px', background:'#ef4444', color:'#fff', borderRadius:'50%', width:'18px', height:'18px', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:F_NUM, fontSize:'0.7rem', fontWeight:700, border:`2px solid ${navBg}`}}>{totalBadge}</span>}
             </div>
-            <button onClick={()=>setTab('financial')} style={{display:'flex', alignItems:'center', gap:'7px', padding:'0.45rem 0.875rem', borderRadius:'8px', cursor:'pointer', fontFamily:F_BODY, fontSize:'0.85rem', fontWeight:500, transition:'all 0.2s', background:tab==='financial'?'rgba(201,168,76,0.18)':'transparent', color:tab==='financial'?'#C9A84C':'rgba(237,232,222,0.65)', border:`1px solid ${tab==='financial'?'rgba(201,168,76,0.32)':'transparent'}`}}>
+            <button onClick={()=>setTab('financial')} style={{
+              display:'flex', alignItems:'center', gap:'7px',
+              padding:'0.45rem 0.875rem', borderRadius:'8px', cursor:'pointer',
+              fontFamily:F_BODY, fontSize:'0.85rem', fontWeight:500,
+              transition:'all 0.2s',
+              background: tab==='financial' ? tabActiveBg : tabInactiveBg,
+              color: tab==='financial' ? '#C9A84C' : tabInactiveColor,
+              border:`1px solid ${tab==='financial' ? tabActiveBorder : 'transparent'}`,
+            }}>
               <BarChart2 size={13}/> <span className="admin-brand-subtitle">Financial</span>
             </button>
           </nav>
 
           {/* Right controls */}
           <div className="admin-icon-btn-wrap" style={{display:'flex', alignItems:'center', gap:'4px', flexShrink:0}}>
-            <IconBtn icon={<RefreshCw size={15} className={loading?'animate-spin':''}/>} label="Refresh" onClick={fetchAll}/>
-            <IconBtn icon={isDark?<Sun size={15}/>:<Moon size={15}/>} label={isDark?'Dark':'Light'} onClick={toggle}/>
-            <IconBtn icon={<LogOut size={15}/>} label="Lock" onClick={onLock} danger/>
+            <IconBtn icon={<RefreshCw size={15} className={loading?'animate-spin':''}/>} label="Refresh" onClick={fetchAll} isDark={isDark}/>
+            <IconBtn icon={isDark?<Sun size={15}/>:<Moon size={15}/>} label={isDark?'Dark':'Light'} onClick={toggle} isDark={isDark}/>
+            <IconBtn icon={<LogOut size={15}/>} label="Lock" onClick={onLock} danger isDark={isDark}/>
           </div>
         </div>
       </header>
@@ -709,7 +747,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
         {/* ── APPOINTMENTS TAB ── */}
         {tab==='appointments'&&(
           <>
-            {/* Stats — 4 cards, no Unread Msgs */}
+            {/* Stats */}
             <div className="admin-stat-grid">
               {[
                 {label:'Total',     v:stats.total,     Icon:CalendarCheck, color:'#C9A84C'},
@@ -722,7 +760,6 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                     <span style={{fontFamily:F_MONO, fontSize:'0.68rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--text-muted)'}}>{label}</span>
                     <Icon size={16} style={{color}}/>
                   </div>
-                  {/* Use Inter/DM Sans for numbers so "0" looks like 0 not O */}
                   <p className="admin-stat-num" style={{fontFamily:F_NUM, fontWeight:700, fontSize:'2.5rem', color:'var(--text-primary)', lineHeight:1, letterSpacing:'-0.02em'}}>{v}</p>
                 </div>
               ))}
@@ -858,9 +895,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                 {label:'Net Income',    v:netIncome,    Icon:DollarSign,   color:netIncome>=0?'#16A34A':'#DC2626', bg:netIncome>=0?'rgba(22,163,74,0.08)':'rgba(232,112,125,0.09)', accent:netIncome>=0?'rgba(22,163,74,0.5)':'rgba(232,112,125,0.5)'},
               ].map(({label,v,Icon,color,bg,accent})=>(
                 <div key={label} style={{...CARD, padding:'1.75rem', position:'relative', overflow:'hidden'}}>
-                  {/* Top accent bar */}
                   <div style={{position:'absolute', top:0, left:0, right:0, height:'3px', background:`linear-gradient(90deg, ${accent}, transparent)`}}/>
-                  {/* Faint bg circle */}
                   <div style={{position:'absolute', right:'-18px', bottom:'-18px', width:'90px', height:'90px', borderRadius:'50%', background:bg, pointerEvents:'none'}}/>
                   <div style={{display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:'1.25rem'}}>
                     <span style={{fontFamily:F_MONO, fontSize:'0.72rem', letterSpacing:'0.14em', textTransform:'uppercase', color:'var(--text-muted)', fontWeight:700, lineHeight:1.4}}>{label}</span>
@@ -878,7 +913,6 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
 
             {/* Charts */}
             <div className="admin-chart-grid">
-              {/* LINE CHART */}
               <div style={{...CARD, padding:'1.75rem', position:'relative', overflow:'hidden'}}>
                 <div style={{position:'absolute', top:0, left:0, right:0, height:'3px', background:'linear-gradient(90deg, var(--gold), transparent)'}}/>
                 <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1.5rem'}}>
@@ -890,7 +924,6 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                   : <CustomLineChart data={chartData} fmtPHP={fmtPHP} isDark={isDark}/>
                 }
               </div>
-              {/* BAR CHART */}
               <div style={{...CARD, padding:'1.75rem', position:'relative', overflow:'hidden'}}>
                 <div style={{position:'absolute', top:0, left:0, right:0, height:'3px', background:'linear-gradient(90deg, var(--gold), transparent)'}}/>
                 <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1.5rem'}}>
@@ -917,7 +950,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                 </div>
 
                 <div style={{display:'flex', flexDirection:'column', gap:'1.125rem'}}>
-                  {/* Date with tracker */}
+                  {/* Date */}
                   <div>
                     <label style={LBL}>Date</label>
                     <div style={{display:'flex', alignItems:'center', gap:'7px', marginBottom:'6px', padding:'0.4rem 0.75rem', borderRadius:'6px', background:'var(--gold-pale)', border:'1px solid var(--gold-border)'}}>
@@ -945,7 +978,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                     </div>
                   </div>
 
-                  {/* Client Name — Revenue only, dropdown OR manual walk-in */}
+                  {/* Client Name — Revenue only */}
                   {finForm.type==='revenue'&&(
                     <>
                       <div>
@@ -991,7 +1024,6 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                             className="input-luxury" style={{fontSize:'0.95rem'}}/>
                         )}
                       </div>
-                      {/* Appointment / Issue Type — auto-filled for dropdown, editable for walk-in */}
                       <div>
                         <label style={LBL}>Appointment / Issue Type</label>
                         {clientMode==='dropdown' ? (
@@ -1007,7 +1039,6 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                     </>
                   )}
 
-
                   {/* Amount */}
                   <div>
                     <label style={LBL}>Amount (₱)</label>
@@ -1016,7 +1047,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                       className="input-luxury" style={{fontSize:'0.95rem'}}/>
                   </div>
 
-                  {/* Invoice — auto-generated, editable */}
+                  {/* Invoice */}
                   <div>
                     <label style={LBL}>Invoice No. <span style={{color:'var(--text-faint)', textTransform:'none', letterSpacing:'normal', fontSize:'0.72rem'}}>(auto-generated, editable)</span></label>
                     <input type="text" value={finForm.invoice_number}
