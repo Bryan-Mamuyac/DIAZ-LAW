@@ -211,6 +211,7 @@ body::after {
   /* Inputs */
   .input-luxury {
     width: 100%;
+    box-sizing: border-box;
     background: var(--bg-raised);
     border: 1px solid var(--border-strong);
     border-radius: var(--radius-sm);
@@ -606,6 +607,21 @@ body::after {
   .admin-bottom-grid > div:first-child {
     min-width: 0;
     width: 100%;
+    box-sizing: border-box;
+  }
+  /* Ensure all inputs inside admin cards fit the container */
+  .admin-bottom-grid input,
+  .admin-bottom-grid select,
+  .admin-bottom-grid textarea {
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  /* Prevent any fixed-width child from breaking layout */
+  .admin-bottom-grid > div {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 }
 
