@@ -444,6 +444,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
   const isDark = theme === 'dark'
   const mounted = true
 
+  const [visibleAppts,  setVisibleAppts]  = useState(5)
   const [calView,       setCalView]       = useState({ month: new Date().getMonth(), year: new Date().getFullYear() })
   const [calModal,      setCalModal]      = useState<{ date: string; appts: Appointment[] } | null>(null)
 
@@ -870,7 +871,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                           </tr>
                         </thead>
                         <tbody>
-                          {filtered.map((appt,i)=>{
+                          {filtered.slice(0, visibleAppts).map((appt,i)=>{
                             const a=appt as Appointment&{appointment_time?:string}
                             return (
                               <tr key={a.id} style={{borderBottom:'1px solid var(--border)', cursor:'pointer'}}
@@ -896,6 +897,26 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                           })}
                         </tbody>
                       </table>
+                    </div>
+                    {/* ── Pagination footer ── */}
+                    <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.75rem 1.25rem', borderTop:'1px solid var(--border)', background:'var(--bg-raised)'}}>
+                      <p style={{fontFamily:F_MONO, fontSize:'0.63rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--text-faint)'}}>
+                        Showing {Math.min(visibleAppts, filtered.length)} of {filtered.length}
+                      </p>
+                      <div style={{display:'flex', gap:'6px'}}>
+                        {visibleAppts > 5 && (
+                          <button onClick={()=>setVisibleAppts(v=>Math.max(5,v-5))}
+                            style={{display:'flex', alignItems:'center', gap:'5px', padding:'0.35rem 0.875rem', borderRadius:'7px', fontFamily:F_BODY, fontSize:'0.82rem', fontWeight:500, cursor:'pointer', background:'var(--bg-surface)', border:'1px solid var(--border)', color:'var(--text-muted)'}}>
+                            <ChevronDown size={13} style={{transform:'rotate(180deg)'}}/> Show Less
+                          </button>
+                        )}
+                        {visibleAppts < filtered.length && (
+                          <button onClick={()=>setVisibleAppts(v=>v+5)}
+                            style={{display:'flex', alignItems:'center', gap:'5px', padding:'0.35rem 0.875rem', borderRadius:'7px', fontFamily:F_BODY, fontSize:'0.82rem', fontWeight:500, cursor:'pointer', background:'var(--gold-pale)', color:'var(--gold)', border:'1px solid var(--gold-border)'}}>
+                            Show More <ChevronDown size={13}/>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1373,43 +1394,130 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                   </div>
                 </div>
 
-                <div className="admin-table-scroll" style={{overflowX:'auto', overflowY:'auto', flex:1}}>
+                {/* ── Scrollable tables area ── */}
+                <div style={{overflowY:'auto', flex:1, maxHeight:'calc(100vh - 320px)'}}>
                   {filteredRecords.length===0 ? (
                     <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.95rem', padding:'3.5rem', fontFamily:F_BODY}}>No records found</p>
-                  ) : (
-                    <table style={{width:'100%', minWidth:'820px', borderCollapse:'collapse'}}>
-                      <thead style={{position:'sticky', top:0, zIndex:1}}>
-                        <tr style={{background:'var(--bg-raised)', borderBottom:'1px solid var(--border)'}}>
-                          {['Date','Type','Amount','Invoice','Client','Issue','Payment','Description'].map(h=>(
-                            <th key={h} style={{textAlign:'left', padding:'0.75rem 1rem', fontFamily:F_MONO, fontSize:'0.75rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--text-primary)', fontWeight:800, whiteSpace:'nowrap'}}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredRecords.map(r=>{
-                          const x=r as FinancialRecord&{invoice_number?:string;client_name?:string;client_issue?:string;payment_method?:string}
-                          return (
-                            <tr key={r.id} style={{borderBottom:'1px solid var(--border)'}}
-                              onMouseEnter={e=>(e.currentTarget as HTMLTableRowElement).style.background='var(--bg-raised)'}
-                              onMouseLeave={e=>(e.currentTarget as HTMLTableRowElement).style.background=''}>
-                              <td style={{padding:'0.875rem 1rem', fontFamily:F_NUM, fontSize:'0.9rem', fontWeight:400, color:'var(--text-secondary)', whiteSpace:'nowrap'}}>{format(parseISO(r.record_date),'MMM d, yyyy')}</td>
-                              <td style={{padding:'0.875rem 1rem'}}>
-                                <span style={{background:r.type==='revenue'?'rgba(22,163,74,0.1)':'rgba(232,112,125,0.12)', color:r.type==='revenue'?'#16A34A':'#DC2626', border:`1px solid ${r.type==='revenue'?'rgba(22,163,74,0.25)':'rgba(232,112,125,0.3)'}`, padding:'0.22rem 0.6rem', borderRadius:'4px', fontFamily:F_MONO, fontSize:'0.68rem', fontWeight:500, letterSpacing:'0.08em', textTransform:'uppercase'}}>
-                                  {r.type}
-                                </span>
-                              </td>
-                              <td style={{padding:'0.875rem 1rem', fontFamily:F_NUM, fontSize:'0.92rem', fontWeight:500, color:r.type==='revenue'?'#16A34A':'#DC2626', whiteSpace:'nowrap'}}>{fmtPHP(r.amount)}</td>
-                              <td style={{padding:'0.875rem 1rem', fontSize:'0.88rem', fontWeight:400, color:'var(--text-muted)', fontFamily:F_MONO}}>{x.invoice_number||'—'}</td>
-                              <td style={{padding:'0.875rem 1rem', fontSize:'0.9rem', fontWeight:400, color:'var(--text-secondary)', fontFamily:F_BODY}}>{x.client_name||'—'}</td>
-                              <td style={{padding:'0.875rem 1rem', fontSize:'0.88rem', fontWeight:400, color:'var(--text-muted)', fontFamily:F_BODY, maxWidth:'140px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{x.client_issue||'—'}</td>
-                              <td style={{padding:'0.875rem 1rem', fontSize:'0.88rem', fontWeight:400, color:'var(--text-muted)', fontFamily:F_BODY}}>{x.payment_method||'—'}</td>
-                              <td style={{padding:'0.875rem 1rem', fontSize:'0.88rem', fontWeight:400, color:'var(--text-muted)', fontFamily:F_BODY, minWidth:'140px', maxWidth:'220px', whiteSpace:'normal', wordBreak:'break-word', lineHeight:1.5}}>{r.description}</td>
+                  ) : (()=>{
+                    const revenues = filteredRecords.filter(r=>r.type==='revenue')
+                    const expenses = filteredRecords.filter(r=>r.type==='expense')
+                    const totalRev = revenues.reduce((s,r)=>s+r.amount,0)
+                    const totalExp = expenses.reduce((s,r)=>s+r.amount,0)
+
+                    // Revenue-only columns: Date, Amount, Invoice, Client, Issue, Payment, Description
+                    // Expense-only columns: Date, Amount, Payment, Description
+                    const RevTable = ({rows}: {rows: FinancialRecord[]}) => (
+                      <div style={{overflowX:'auto'}}>
+                        <table style={{width:'100%', minWidth:'680px', borderCollapse:'collapse'}}>
+                          <thead style={{position:'sticky', top:0, zIndex:1}}>
+                            <tr style={{background:'rgba(22,163,74,0.08)', borderBottom:'2px solid rgba(22,163,74,0.2)'}}>
+                              {['Date','Amount','Invoice','Client','Issue','Payment','Description'].map(h=>(
+                                <th key={h} style={{textAlign:'left', padding:'0.7rem 1rem', fontFamily:F_MONO, fontSize:'0.68rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'#15803D', fontWeight:700, whiteSpace:'nowrap'}}>{h}</th>
+                              ))}
                             </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  )}
+                          </thead>
+                          <tbody>
+                            {rows.map(r=>{
+                              const x=r as FinancialRecord&{invoice_number?:string;client_name?:string;client_issue?:string;payment_method?:string}
+                              return (
+                                <tr key={r.id} style={{borderBottom:'1px solid var(--border)'}}
+                                  onMouseEnter={e=>(e.currentTarget as HTMLTableRowElement).style.background='rgba(22,163,74,0.04)'}
+                                  onMouseLeave={e=>(e.currentTarget as HTMLTableRowElement).style.background=''}>
+                                  <td style={{padding:'0.8rem 1rem', fontFamily:F_NUM, fontSize:'0.88rem', color:'var(--text-secondary)', whiteSpace:'nowrap'}}>{format(parseISO(r.record_date),'MMM d, yyyy')}</td>
+                                  <td style={{padding:'0.8rem 1rem', fontFamily:F_NUM, fontSize:'0.9rem', fontWeight:600, color:'#16A34A', whiteSpace:'nowrap'}}>{fmtPHP(r.amount)}</td>
+                                  <td style={{padding:'0.8rem 1rem', fontFamily:F_MONO, fontSize:'0.8rem', color:'var(--text-muted)'}}>{x.invoice_number||'—'}</td>
+                                  <td style={{padding:'0.8rem 1rem', fontFamily:F_BODY, fontSize:'0.88rem', color:'var(--text-secondary)'}}>{x.client_name||'—'}</td>
+                                  <td style={{padding:'0.8rem 1rem', fontFamily:F_BODY, fontSize:'0.85rem', color:'var(--text-muted)', maxWidth:'130px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{x.client_issue||'—'}</td>
+                                  <td style={{padding:'0.8rem 1rem', fontFamily:F_BODY, fontSize:'0.85rem', color:'var(--text-muted)'}}>{x.payment_method||'—'}</td>
+                                  <td style={{padding:'0.8rem 1rem', fontFamily:F_BODY, fontSize:'0.85rem', color:'var(--text-muted)', minWidth:'130px', maxWidth:'200px', whiteSpace:'normal', wordBreak:'break-word', lineHeight:1.5}}>{r.description}</td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                          <tfoot>
+                            <tr style={{background:'rgba(22,163,74,0.06)', borderTop:'2px solid rgba(22,163,74,0.2)'}}>
+                              <td style={{padding:'0.75rem 1rem', fontFamily:F_MONO, fontSize:'0.72rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'#15803D', fontWeight:700}}>Total</td>
+                              <td style={{padding:'0.75rem 1rem', fontFamily:F_NUM, fontSize:'0.95rem', fontWeight:800, color:'#16A34A'}}>{fmtPHP(totalRev)}</td>
+                              <td colSpan={5}/>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    )
+
+                    const ExpTable = ({rows}: {rows: FinancialRecord[]}) => (
+                      <div style={{overflowX:'auto'}}>
+                        <table style={{width:'100%', minWidth:'520px', borderCollapse:'collapse'}}>
+                          <thead style={{position:'sticky', top:0, zIndex:1}}>
+                            <tr style={{background:'rgba(232,112,125,0.08)', borderBottom:'2px solid rgba(232,112,125,0.2)'}}>
+                              {['Date','Amount','Payment','Description'].map(h=>(
+                                <th key={h} style={{textAlign:'left', padding:'0.7rem 1rem', fontFamily:F_MONO, fontSize:'0.68rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'#B91C1C', fontWeight:700, whiteSpace:'nowrap'}}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rows.map(r=>{
+                              const x=r as FinancialRecord&{payment_method?:string}
+                              return (
+                                <tr key={r.id} style={{borderBottom:'1px solid var(--border)'}}
+                                  onMouseEnter={e=>(e.currentTarget as HTMLTableRowElement).style.background='rgba(232,112,125,0.04)'}
+                                  onMouseLeave={e=>(e.currentTarget as HTMLTableRowElement).style.background=''}>
+                                  <td style={{padding:'0.8rem 1rem', fontFamily:F_NUM, fontSize:'0.88rem', color:'var(--text-secondary)', whiteSpace:'nowrap'}}>{format(parseISO(r.record_date),'MMM d, yyyy')}</td>
+                                  <td style={{padding:'0.8rem 1rem', fontFamily:F_NUM, fontSize:'0.9rem', fontWeight:600, color:'#DC2626', whiteSpace:'nowrap'}}>{fmtPHP(r.amount)}</td>
+                                  <td style={{padding:'0.8rem 1rem', fontFamily:F_BODY, fontSize:'0.85rem', color:'var(--text-muted)'}}>{x.payment_method||'—'}</td>
+                                  <td style={{padding:'0.8rem 1rem', fontFamily:F_BODY, fontSize:'0.85rem', color:'var(--text-muted)', minWidth:'130px', maxWidth:'260px', whiteSpace:'normal', wordBreak:'break-word', lineHeight:1.5}}>{r.description}</td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                          <tfoot>
+                            <tr style={{background:'rgba(232,112,125,0.06)', borderTop:'2px solid rgba(232,112,125,0.2)'}}>
+                              <td style={{padding:'0.75rem 1rem', fontFamily:F_MONO, fontSize:'0.72rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'#B91C1C', fontWeight:700}}>Total</td>
+                              <td style={{padding:'0.75rem 1rem', fontFamily:F_NUM, fontSize:'0.95rem', fontWeight:800, color:'#DC2626'}}>{fmtPHP(totalExp)}</td>
+                              <td colSpan={2}/>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    )
+
+                    return (
+                      <>
+                        {/* ── REVENUE TABLE ── */}
+                        {(finTypeFilter==='all'||finTypeFilter==='revenue') && revenues.length > 0 && (
+                          <div>
+                            <div style={{display:'flex', alignItems:'center', gap:'8px', padding:'0.75rem 1rem', background:'rgba(22,163,74,0.06)', borderBottom:'1px solid rgba(22,163,74,0.15)'}}>
+                              <TrendingUp size={13} style={{color:'#16A34A', flexShrink:0}}/>
+                              <span style={{fontFamily:F_MONO, fontSize:'0.68rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'#16A34A', fontWeight:700}}>Revenue — {revenues.length} record{revenues.length!==1?'s':''}</span>
+                            </div>
+                            <RevTable rows={revenues}/>
+                          </div>
+                        )}
+                        {(finTypeFilter==='all'||finTypeFilter==='revenue') && revenues.length===0 && (
+                          <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.88rem', padding:'2rem', fontFamily:F_BODY}}>No revenue records</p>
+                        )}
+
+                        {/* ── DIVIDER ── */}
+                        {finTypeFilter==='all' && revenues.length>0 && expenses.length>0 && (
+                          <div style={{height:'1px', background:'var(--border)', margin:'0'}}/>
+                        )}
+
+                        {/* ── EXPENSE TABLE ── */}
+                        {(finTypeFilter==='all'||finTypeFilter==='expense') && expenses.length > 0 && (
+                          <div>
+                            <div style={{display:'flex', alignItems:'center', gap:'8px', padding:'0.75rem 1rem', background:'rgba(232,112,125,0.06)', borderBottom:'1px solid rgba(232,112,125,0.15)', borderTop: finTypeFilter==='all' && revenues.length>0 ? '1px solid rgba(232,112,125,0.15)' : 'none'}}>
+                              <TrendingDown size={13} style={{color:'#DC2626', flexShrink:0}}/>
+                              <span style={{fontFamily:F_MONO, fontSize:'0.68rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'#DC2626', fontWeight:700}}>Expense — {expenses.length} record{expenses.length!==1?'s':''}</span>
+                            </div>
+                            <ExpTable rows={expenses}/>
+                          </div>
+                        )}
+                        {(finTypeFilter==='all'||finTypeFilter==='expense') && expenses.length===0 && (
+                          <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.88rem', padding:'2rem', fontFamily:F_BODY}}>No expense records</p>
+                        )}
+                      </>
+                    )
+                  })()}
                 </div>
               </div>
             </div>

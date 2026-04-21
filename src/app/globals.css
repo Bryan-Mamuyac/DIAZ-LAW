@@ -783,14 +783,14 @@ body::after {
 }
 .hero-photo-badge-name {
   font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #EDE8DE;
   letter-spacing: 0.02em;
 }
 .hero-photo-badge-title {
   font-family: 'DM Mono', monospace;
-  font-size: 0.62rem;
+  font-size: 0.56rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: rgba(201,168,76,0.85);
