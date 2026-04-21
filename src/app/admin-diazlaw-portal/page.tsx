@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { supabase, Appointment, ContactMessage, FinancialRecord } from '@/lib/supabase'
+import { useTheme } from '@/components/ThemeProvider'
 import * as XLSX from 'xlsx'
 import {
   CalendarCheck, Mail, Users, Clock, CheckCircle2, Eye,
@@ -66,32 +67,9 @@ function generateInvoice(count: number): string {
   return `INV-${yr}-${seq}`
 }
 
-/* ─────────── THEME HOOK ─────────── */
-function useAdminTheme() {
-  const [isDark,  setIsDark]  = useState(false)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-    const dark = localStorage.getItem(THEME_KEY) === 'dark'
-    setIsDark(dark)
-    apply(dark)
-  }, [])
-
-  function apply(dark: boolean) {
-    document.documentElement.classList.remove('dark','light')
-    document.documentElement.classList.add(dark ? 'dark' : 'light')
-  }
-  function toggle() {
-    const next = !isDark
-    setIsDark(next)
-    localStorage.setItem(THEME_KEY, next ? 'dark' : 'light')
-    apply(next)
-  }
-  return { isDark, toggle, mounted }
-}
-
-/* ─────────── ICON BUTTON ─────────── */
+/* ══════════════════════════════════════
+   ICON BUTTON
+══════════════════════════════════════ */
 function IconBtn({ icon, label, onClick, danger=false }: {
   icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean
 }) {
@@ -295,7 +273,9 @@ function PinScreen({ onSuccess }: { onSuccess: () => void }) {
   const [attempts, setAttempts] = useState(0)
   const [locked,   setLocked]   = useState(false)
   const [timer,    setTimer]    = useState(0)
-  const { isDark, toggle, mounted } = useAdminTheme()
+  const { theme, toggle } = useTheme()
+  const isDark = theme === 'dark'
+  const mounted = true
   const timerRef = useRef<ReturnType<typeof setTimeout>|null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -437,7 +417,9 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
   const [updating,   setUpdating]   = useState<string|null>(null)
   const [dateVal,    setDateVal]    = useState('')
   const [notes,      setNotes]      = useState('')
-  const { isDark, toggle, mounted } = useAdminTheme()
+  const { theme, toggle } = useTheme()
+  const isDark = theme === 'dark'
+  const mounted = true
 
   // Financial filters
   const [finTypeFilter,  setFinTypeFilter]  = useState<'all'|'revenue'|'expense'>('all')
@@ -846,7 +828,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                       <div style={{display:'flex', alignItems:'center', gap:'8px', flexWrap:'wrap', marginBottom:'4px'}}>
                         <p style={{fontWeight:600, fontSize:'0.95rem', color:'var(--text-primary)', fontFamily:F_BODY}}>{msg.name}</p>
                         <p style={{fontSize:'0.82rem', color:'var(--text-faint)', fontFamily:F_BODY}}>{msg.email}</p>
-                        {!!(msg as Record<string,unknown>).contact_number && <p style={{fontSize:'0.82rem', color:'var(--text-faint)', fontFamily:F_BODY}}>· {String((msg as Record<string,unknown>).contact_number)}</p>}
+                        {msg.contact_number && <p style={{fontSize:'0.82rem', color:'var(--text-faint)', fontFamily:F_BODY}}>· {msg.contact_number}</p>}
                         {!msg.read&&<span style={{background:'var(--gold-pale)', color:'var(--gold)', border:'1px solid var(--gold-border)', padding:'0.1rem 0.45rem', borderRadius:'4px', fontFamily:F_MONO, fontSize:'0.6rem', fontWeight:600, letterSpacing:'0.1em', textTransform:'uppercase'}}>New</span>}
                       </div>
                       <p style={{fontSize:'0.9rem', color:'var(--text-secondary)', fontWeight:500, marginBottom:'3px', fontFamily:F_BODY}}>{msg.subject}</p>
@@ -1123,7 +1105,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                   {filteredRecords.length===0 ? (
                     <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.95rem', padding:'3.5rem', fontFamily:F_BODY}}>No records found</p>
                   ) : (
-                    <table style={{width:'100%', borderCollapse:'collapse'}}>
+                    <table style={{width:'100%', minWidth:'820px', borderCollapse:'collapse'}}>
                       <thead style={{position:'sticky', top:0, zIndex:1}}>
                         <tr style={{background:'var(--bg-raised)', borderBottom:'1px solid var(--border)'}}>
                           {['Date','Type','Amount','Invoice','Client','Issue','Payment','Description'].map(h=>(
@@ -1239,11 +1221,11 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
               <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem'}}>
                 <div><p style={LBL}>From</p><p style={{fontSize:'0.95rem', color:'var(--text-primary)', fontWeight:600, fontFamily:F_BODY}}>{selMsg.name}</p></div>
                 <div><p style={LBL}>Email</p><a href={`mailto:${selMsg.email}`} style={{fontSize:'0.95rem', color:'var(--gold)', fontWeight:500, fontFamily:F_BODY}}>{selMsg.email}</a></div>
-                {!!(selMsg as Record<string,unknown>).contact_number && (
+                {selMsg.contact_number && (
                   <div style={{gridColumn:'1/-1'}}>
                     <p style={LBL}>Contact Number</p>
-                    <a href={`tel:${String((selMsg as Record<string,unknown>).contact_number).replace(/\s/g,'')}`} style={{fontSize:'0.95rem', color:'var(--gold)', fontWeight:500, fontFamily:F_BODY}}>
-                      {String((selMsg as Record<string,unknown>).contact_number)}
+                    <a href={`tel:${selMsg.contact_number.replace(/\s/g,'')}`} style={{fontSize:'0.95rem', color:'var(--gold)', fontWeight:500, fontFamily:F_BODY}}>
+                      {selMsg.contact_number}
                     </a>
                   </div>
                 )}
