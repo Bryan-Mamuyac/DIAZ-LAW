@@ -116,7 +116,8 @@ export default function HomePage() {
                 </div>
               </div>
             </div>{/* end hero-inner-grid */}
-        </div>
+          </div>{/* end hero-glass-card */}
+        </div>{/* end hero-container */}
       </section>
 
       {/* ── STATS BAR ── */}
