@@ -46,6 +46,7 @@ export default function ContactPage() {
     const e: Partial<FormData> = {}
     if (!form.name.trim()) e.name = 'Required'
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Valid email required'
+    if (!form.contact_number.trim() || !/^[0-9+\- ]{7,15}$/.test(form.contact_number)) e.contact_number = 'Valid contact number required'
     if (!form.subject.trim()) e.subject = 'Required'
     if (!form.message.trim()) e.message = 'Required'
     return e
@@ -65,7 +66,7 @@ export default function ContactPage() {
     try {
       const { error } = await supabase.from('contact_messages').insert([{
         name: form.name.trim(), email: form.email.trim(),
-        contact_number: form.contact_number.trim() || null,
+        contact_number: form.contact_number.trim(),
         subject: form.subject.trim(), message: form.message.trim(), read: false,
       }])
       if (error) throw error
@@ -180,10 +181,11 @@ export default function ContactPage() {
                   </div>
 
                   <div>
-                    <label className="label-lux">Contact Number <span style={{color:'var(--text-faint)', fontFamily:'inherit', textTransform:'none', letterSpacing:'normal', fontSize:'0.7rem'}}>(optional)</span></label>
+                    <label className="label-lux">Contact Number <span className="text-red-500">*</span></label>
                     <input type="tel" name="contact_number" value={form.contact_number}
                       onChange={handleChange} placeholder="e.g. 0995 362 2071"
                       className="input-luxury" />
+                    {errors.contact_number && <p className="text-red-500 text-xs mt-1">{errors.contact_number}</p>}
                   </div>
 
                   <div>

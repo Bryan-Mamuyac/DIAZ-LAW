@@ -447,6 +447,12 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
   const [calView,       setCalView]       = useState({ month: new Date().getMonth(), year: new Date().getFullYear() })
   const [calModal,      setCalModal]      = useState<{ date: string; appts: Appointment[] } | null>(null)
 
+  // Chart filter — shared for both Line and Bar
+  type ChartRange = '5d' | '2w' | '3w' | 'month'
+  const currentMonthISO = () => new Date().toISOString().slice(0, 7)
+  const [chartRange, setChartRange] = useState<ChartRange>('5d')
+  const [chartMonth, setChartMonth] = useState<string>(currentMonthISO())
+
   // Financial filters
   const [finTypeFilter,  setFinTypeFilter]  = useState<'all'|'revenue'|'expense'>('all')
   const [finMonthFilter, setFinMonthFilter] = useState<string>('all')
@@ -514,6 +520,41 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
     records.forEach(r => seen.add(r.record_date.slice(0,7)))
     return Array.from(seen).sort().reverse()
   }, [records])
+
+  // Helper: get working days (Mon-Fri) going back N days from today
+  const getWorkingDays = useCallback((n: number): string[] => {
+    const days: string[] = []
+    const d = new Date()
+    while (days.length < n) {
+      const day = d.getDay()
+      if (day !== 0 && day !== 6) {
+        days.unshift(d.toISOString().slice(0, 10))
+      }
+      d.setDate(d.getDate() - 1)
+    }
+    return days
+  }, [])
+
+  const buildChartData = useCallback((range: ChartRange, month: string) => {
+    let allowedDates: Set<string> | null = null
+    if (range !== 'month') {
+      const n = range === '5d' ? 5 : range === '2w' ? 10 : 15
+      allowedDates = new Set(getWorkingDays(n))
+    }
+    const days: Record<string, {month: string; revenue: number; expense: number}> = {}
+    records.forEach(r => {
+      const d = r.record_date
+      if (range === 'month' && d.slice(0, 7) !== month) return
+      if (allowedDates && !allowedDates.has(d)) return
+      const label = format(parseISO(d), 'MMM d')
+      if (!days[d]) days[d] = {month: label, revenue: 0, expense: 0}
+      if (r.type === 'revenue') days[d].revenue += r.amount
+      else days[d].expense += r.amount
+    })
+    return Object.entries(days).sort(([a],[b]) => a.localeCompare(b)).map(([,v]) => v)
+  }, [records, getWorkingDays])
+
+  const sharedChartData = useMemo(() => buildChartData(chartRange, chartMonth), [buildChartData, chartRange, chartMonth])
 
   const chartData = useMemo(() => {
     const days: Record<string,{month:string;revenue:number;expense:number}> = {}
@@ -1075,28 +1116,65 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
               ))}
             </div>
 
-            {/* Charts */}
+            {/* Charts — shared filter */}
+            <div style={{...CARD, padding:'1.25rem 1.5rem', marginBottom:'1.25rem', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:'0.75rem'}}>
+              <p style={{fontFamily:F_MONO, fontSize:'0.75rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700}}>Chart Filter</p>
+              <div style={{display:'flex', gap:'6px', flexWrap:'wrap', alignItems:'center'}}>
+                {/* Range buttons */}
+                {([['5d','Last 5 Days'],['2w','Last 2 Weeks'],['3w','Last 3 Weeks']] as [ChartRange,string][]).map(([v,label])=>(
+                  <button key={v} onClick={()=>setChartRange(v)}
+                    style={{padding:'0.35rem 0.75rem', borderRadius:'7px', fontFamily:F_MONO, fontSize:'0.65rem', letterSpacing:'0.08em', textTransform:'uppercase', fontWeight:600, cursor:'pointer', transition:'all 0.15s',
+                      background: chartRange===v ? 'var(--gold)' : 'var(--bg-raised)',
+                      color:      chartRange===v ? '#fff'        : 'var(--text-muted)',
+                      border:`1px solid ${chartRange===v ? 'var(--gold)' : 'var(--border)'}`,
+                    }}>{label}</button>
+                ))}
+                {/* Divider */}
+                <div style={{width:'1px', height:'20px', background:'var(--border)', margin:'0 4px'}}/>
+                {/* Month button */}
+                <button onClick={()=>setChartRange('month')}
+                  style={{padding:'0.35rem 0.75rem', borderRadius:'7px', fontFamily:F_MONO, fontSize:'0.65rem', letterSpacing:'0.08em', textTransform:'uppercase', fontWeight:600, cursor:'pointer', transition:'all 0.15s',
+                    background: chartRange==='month' ? 'var(--gold)' : 'var(--bg-raised)',
+                    color:      chartRange==='month' ? '#fff'        : 'var(--text-muted)',
+                    border:`1px solid ${chartRange==='month' ? 'var(--gold)' : 'var(--border)'}`,
+                  }}>By Month</button>
+                {/* Month selector — only shown when month mode */}
+                {chartRange==='month' && (
+                  <div style={{position:'relative'}}>
+                    <select value={chartMonth} onChange={e=>setChartMonth(e.target.value)}
+                      className="input-luxury" style={{paddingTop:'0.35rem', paddingBottom:'0.35rem', paddingRight:'2rem', paddingLeft:'0.75rem', fontSize:'0.8rem', appearance:'none', cursor:'pointer', minWidth:'140px'}}>
+                      {monthOptions.length===0
+                        ? <option value={chartMonth}>{format(parseISO(chartMonth+'-01'),'MMMM yyyy')}</option>
+                        : monthOptions.map(m=><option key={m} value={m}>{format(parseISO(m+'-01'),'MMMM yyyy')}</option>)
+                      }
+                    </select>
+                    <ChevronDown size={12} style={{position:'absolute', right:'8px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color:'var(--text-faint)'}}/>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="admin-chart-grid">
               <div style={{...CARD, padding:'1.75rem', position:'relative', overflow:'hidden'}}>
                 <div style={{position:'absolute', top:0, left:0, right:0, height:'3px', background:'linear-gradient(90deg, var(--gold), transparent)'}}/>
                 <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1.5rem'}}>
-                  <p style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700}}>Revenue vs Expense — Daily</p>
+                  <p style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700}}>Revenue vs Expense</p>
                   <span style={{fontFamily:F_MONO, fontSize:'0.6rem', color:'var(--text-faint)', letterSpacing:'0.08em', textTransform:'uppercase', background:'var(--bg-raised)', padding:'0.2rem 0.6rem', borderRadius:'4px', border:'1px solid var(--border)'}}>Line</span>
                 </div>
-                {chartData.length===0
-                  ? <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.95rem', padding:'3.5rem 0', fontFamily:F_BODY}}>No data yet</p>
-                  : <CustomLineChart data={chartData} fmtPHP={fmtPHP} isDark={isDark}/>
+                {sharedChartData.length===0
+                  ? <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.95rem', padding:'3.5rem 0', fontFamily:F_BODY}}>No data for this period</p>
+                  : <CustomLineChart data={sharedChartData} fmtPHP={fmtPHP} isDark={isDark}/>
                 }
               </div>
               <div style={{...CARD, padding:'1.75rem', position:'relative', overflow:'hidden'}}>
                 <div style={{position:'absolute', top:0, left:0, right:0, height:'3px', background:'linear-gradient(90deg, var(--gold), transparent)'}}/>
                 <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'1.5rem'}}>
-                  <p style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700}}>Daily Comparison — Bar</p>
+                  <p style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700}}>Daily Comparison</p>
                   <span style={{fontFamily:F_MONO, fontSize:'0.6rem', color:'var(--text-faint)', letterSpacing:'0.08em', textTransform:'uppercase', background:'var(--bg-raised)', padding:'0.2rem 0.6rem', borderRadius:'4px', border:'1px solid var(--border)'}}>Bar</span>
                 </div>
-                {chartData.length===0
-                  ? <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.95rem', padding:'3.5rem 0', fontFamily:F_BODY}}>No data yet</p>
-                  : <CustomBarChart data={chartData} fmtPHP={fmtPHP} isDark={isDark}/>
+                {sharedChartData.length===0
+                  ? <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.95rem', padding:'3.5rem 0', fontFamily:F_BODY}}>No data for this period</p>
+                  : <CustomBarChart data={sharedChartData} fmtPHP={fmtPHP} isDark={isDark}/>
                 }
               </div>
             </div>

@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { ArrowRight, Scale, FileText, Users, Briefcase, Phone, CheckCircle, MapPin as MapPinIcon, Clock as ClockIcon, Phone as PhoneIcon } from 'lucide-react'
 import { Footer } from '@/components/Footer'
+import { OfficeStatus } from '@/components/OfficeStatus'
 
 const SERVICES = [
   {
@@ -50,9 +51,6 @@ export default function HomePage() {
         <div className="hero-container relative z-10">
           {/* Glass card wrapper */}
           <div className="hero-glass-card">
-            <div className="hero-inner-grid">
-              {/* LEFT — text content */}
-              <div className="hero-text-col">
             {/* Eyebrow */}
             <div className="eyebrow mb-8 anim-fade-in">
               Private Practitioner · Est. July 2024
@@ -96,28 +94,8 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
-              </div>{/* end hero-text-col */}
-
-              {/* RIGHT — photo */}
-              <div className="hero-photo-col anim-fade-in d-2">
-                <div className="hero-photo-frame">
-                  <img
-                    src="/images/MrDiaz.jpg"
-                    alt="Atty. Jushua Mari Lumague Diaz"
-                    className="hero-photo-img"
-                  />
-                  {/* Gold shimmer overlay */}
-                  <div className="hero-photo-overlay" />
-                  {/* Name badge */}
-                  <div className="hero-photo-badge">
-                    <span className="hero-photo-badge-name">Atty. Diaz</span>
-                    <span className="hero-photo-badge-title">Lawyer · Notary Public</span>
-                  </div>
-                </div>
-              </div>
-            </div>{/* end hero-inner-grid */}
-          </div>{/* end hero-glass-card */}
-        </div>{/* end hero-container */}
+          </div>
+        </div>
       </section>
 
       {/* ── STATS BAR ── */}
@@ -297,10 +275,7 @@ export default function HomePage() {
                         <span style={{ color: 'var(--text-secondary)' }}>Monday – Friday</span>
                         <span className="font-medium" style={{ color: 'var(--text-primary)' }}>8:00 AM – 5:00 PM</span>
                       </div>
-                      <div className="flex items-center justify-between text-sm gap-8">
-                        <span style={{ color: 'var(--text-secondary)' }}>Saturday – Sunday</span>
-                        <span className="text-red-500 font-medium text-xs">Closed</span>
-                      </div>
+                      <OfficeStatus />
                     </div>
                   </div>
                 </div>
