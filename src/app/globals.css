@@ -776,6 +776,8 @@ body::after {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  align-items: center;
+  text-align: center;
   background: linear-gradient(to top, rgba(10,14,26,0.85) 55%, transparent);
   backdrop-filter: blur(4px);
 }

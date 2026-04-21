@@ -110,7 +110,7 @@ export default function HomePage() {
                   <div className="hero-photo-overlay" />
                   {/* Name badge */}
                   <div className="hero-photo-badge">
-                    <span className="hero-photo-badge-name">Atty. J.M.L. Diaz</span>
+                    <span className="hero-photo-badge-name">Atty. Diaz</span>
                     <span className="hero-photo-badge-title">Lawyer · Notary Public</span>
                   </div>
                 </div>
