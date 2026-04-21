@@ -50,6 +50,9 @@ export default function HomePage() {
         <div className="hero-container relative z-10">
           {/* Glass card wrapper */}
           <div className="hero-glass-card">
+            <div className="hero-inner-grid">
+              {/* LEFT — text content */}
+              <div className="hero-text-col">
             {/* Eyebrow */}
             <div className="eyebrow mb-8 anim-fade-in">
               Private Practitioner · Est. July 2024
@@ -93,7 +96,26 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
-          </div>
+              </div>{/* end hero-text-col */}
+
+              {/* RIGHT — photo */}
+              <div className="hero-photo-col anim-fade-in d-2">
+                <div className="hero-photo-frame">
+                  <img
+                    src="/images/MrDiaz.jpg"
+                    alt="Atty. Jushua Mari Lumague Diaz"
+                    className="hero-photo-img"
+                  />
+                  {/* Gold shimmer overlay */}
+                  <div className="hero-photo-overlay" />
+                  {/* Name badge */}
+                  <div className="hero-photo-badge">
+                    <span className="hero-photo-badge-name">Atty. J.M.L. Diaz</span>
+                    <span className="hero-photo-badge-title">Lawyer · Notary Public</span>
+                  </div>
+                </div>
+              </div>
+            </div>{/* end hero-inner-grid */}
         </div>
       </section>
 

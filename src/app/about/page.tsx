@@ -77,14 +77,24 @@ export default function AboutPage() {
               {/* Photo card */}
               <div className="card-luxury overflow-hidden">
                 <div className="relative">
+                  {/* Gold corner accent border */}
+                  <div style={{
+                    position:'absolute', inset:0, zIndex:2, pointerEvents:'none',
+                    borderRadius:'inherit',
+                    background:'linear-gradient(135deg, rgba(201,168,76,0.35) 0%, transparent 40%, transparent 60%, rgba(201,168,76,0.18) 100%)',
+                  }}/>
                   <img
-                    src="/images/MrDiazPlaceHolder.png"
+                    src="/images/MrDiaz.jpg"
                     alt="Atty. Jushua Mari Lumague Diaz"
                     className="w-full object-cover"
-                    style={{ maxHeight: '280px', objectPosition: 'top center' }}
+                    style={{
+                      maxHeight: '340px',
+                      objectPosition: 'top center',
+                      display: 'block',
+                    }}
                   />
                   <div
-                    className="absolute bottom-0 inset-x-0 h-16"
+                    className="absolute bottom-0 inset-x-0 h-20"
                     style={{ background: 'linear-gradient(to top, var(--bg-surface), transparent)' }}
                   />
                 </div>
