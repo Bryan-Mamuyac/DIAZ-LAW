@@ -59,6 +59,14 @@ function formatDateDisplay(iso: string) {
   try { return format(parseISO(iso), 'EEEE, MMMM d, yyyy') } catch { return iso }
 }
 
+function formatTime(t: string) {
+  if (!t) return '—'
+  const [h, m] = t.split(':').map(Number)
+  const period = h >= 12 ? 'PM' : 'AM'
+  const hour = h % 12 || 12
+  return `${hour}:${String(m).padStart(2,'0')} ${period}`
+}
+
 function generateInvoice(count: number): string {
   const yr  = new Date().getFullYear()
   const seq = String(count + 1).padStart(3, '0')
@@ -435,6 +443,9 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
   const { theme, toggle } = useTheme()
   const isDark = theme === 'dark'
   const mounted = true
+
+  const [calView,       setCalView]       = useState({ month: new Date().getMonth(), year: new Date().getFullYear() })
+  const [calModal,      setCalModal]      = useState<{ date: string; appts: Appointment[] } | null>(null)
 
   // Financial filters
   const [finTypeFilter,  setFinTypeFilter]  = useState<'all'|'revenue'|'expense'>('all')
@@ -832,7 +843,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                                 <td style={{padding:'1rem 1.125rem', maxWidth:'180px'}}><p style={{fontSize:'0.9rem', color:'var(--text-secondary)', lineHeight:1.4, fontFamily:F_BODY}}>{a.issue_type}</p></td>
                                 <td style={{padding:'1rem 1.125rem'}}><Badge s={a.status}/></td>
                                 <td style={{padding:'1rem 1.125rem', fontFamily:F_NUM, fontSize:'0.85rem', color:'var(--text-muted)', whiteSpace:'nowrap'}}>{a.appointment_date?format(new Date(a.appointment_date+'T00:00:00'),'MMM d, yyyy'):'—'}</td>
-                                <td style={{padding:'1rem 1.125rem', fontFamily:F_NUM, fontSize:'0.85rem', color:'var(--text-muted)'}}>{a.appointment_time||'—'}</td>
+                                <td style={{padding:'1rem 1.125rem', fontFamily:F_NUM, fontSize:'0.85rem', color:'var(--text-muted)'}}>{a.appointment_time ? formatTime(a.appointment_time) : '—'}</td>
                                 <td style={{padding:'1rem 1.125rem', fontFamily:F_NUM, fontSize:'0.85rem', color:'var(--text-muted)', whiteSpace:'nowrap'}}>{a.created_at?format(new Date(a.created_at),'MMM d, yyyy'):'—'}</td>
                                 <td style={{padding:'1rem 1.125rem'}}>
                                   <button onClick={()=>{setSelected(a);setNotes(a.notes||'');setDateVal(a.appointment_date||'')}} style={{display:'flex', alignItems:'center', gap:'5px', padding:'0.4rem 0.9rem', borderRadius:'8px', fontFamily:F_BODY, fontSize:'0.85rem', fontWeight:500, cursor:'pointer', background:'var(--gold-pale)', color:'var(--gold)', border:'1px solid var(--gold-border)', whiteSpace:'nowrap'}}>
@@ -849,6 +860,151 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                 )}
               </>
             )}
+
+            {/* ── APPOINTMENT CALENDAR ── */}
+            {!msgTab&&(()=>{
+              const CAL_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
+              const CAL_DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
+              const STATUS_DOT: Record<AppStatus,string> = {
+                pending:'#D97706', confirmed:'#2563EB', completed:'#16A34A', cancelled:'#B91C1C'
+              }
+              const todayStr = todayISO()
+              const firstDay = new Date(calView.year, calView.month, 1).getDay()
+              const daysInMonth = new Date(calView.year, calView.month+1, 0).getDate()
+
+              // Map appointments by date
+              const byDate: Record<string, Appointment[]> = {}
+              appts.forEach(a => {
+                const d = (a as Record<string,unknown>).appointment_date as string
+                if (!d) return
+                if (!byDate[d]) byDate[d] = []
+                byDate[d].push(a)
+              })
+
+              const prevMonth = () => setCalView(v => v.month===0 ? {month:11,year:v.year-1} : {month:v.month-1,year:v.year})
+              const nextMonth = () => setCalView(v => v.month===11 ? {month:0,year:v.year+1} : {month:v.month+1,year:v.year})
+
+              const cells: (number|null)[] = [...Array(firstDay).fill(null), ...Array.from({length:daysInMonth},(_,i)=>i+1)]
+
+              return (
+                <div style={{...CARD, marginTop:'1.5rem', overflow:'hidden'}}>
+                  {/* Calendar header */}
+                  <div style={{padding:'1.25rem 1.5rem', borderBottom:'1px solid var(--border)', background:'var(--bg-raised)', display:'flex', alignItems:'center', justifyContent:'space-between'}}>
+                    <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+                      <div style={{width:'32px', height:'32px', borderRadius:'8px', background:'var(--gold-pale)', border:'1px solid var(--gold-border)', display:'flex', alignItems:'center', justifyContent:'center'}}>
+                        <Calendar size={14} style={{color:'var(--gold)'}}/>
+                      </div>
+                      <div>
+                        <p style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700}}>Appointment Calendar</p>
+                        <p style={{fontFamily:F_BODY, fontSize:'0.75rem', color:'var(--text-faint)', marginTop:'1px'}}>Click any day to see scheduled appointments</p>
+                      </div>
+                    </div>
+                    <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
+                      {/* Legend */}
+                      <div style={{display:'flex', gap:'10px', marginRight:'12px', flexWrap:'wrap', justifyContent:'flex-end'}}>
+                        {(['pending','confirmed','completed','cancelled'] as AppStatus[]).map(s=>(
+                          <div key={s} style={{display:'flex', alignItems:'center', gap:'4px'}}>
+                            <div style={{width:'8px', height:'8px', borderRadius:'50%', background:STATUS_DOT[s], flexShrink:0}}/>
+                            <span style={{fontFamily:F_MONO, fontSize:'0.6rem', letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--text-faint)'}}>{s}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {/* Month nav */}
+                      <button onClick={prevMonth} style={{width:'32px', height:'32px', borderRadius:'8px', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', background:'var(--bg-inset)', border:'1px solid var(--border)', color:'var(--text-muted)'}}>
+                        <ChevronDown size={14} style={{transform:'rotate(90deg)'}}/>
+                      </button>
+                      <span style={{fontFamily:F_BODY, fontWeight:600, fontSize:'0.95rem', color:'var(--text-primary)', minWidth:'140px', textAlign:'center'}}>
+                        {CAL_MONTHS[calView.month]} {calView.year}
+                      </span>
+                      <button onClick={nextMonth} style={{width:'32px', height:'32px', borderRadius:'8px', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', background:'var(--bg-inset)', border:'1px solid var(--border)', color:'var(--text-muted)'}}>
+                        <ChevronDown size={14} style={{transform:'rotate(-90deg)'}}/>
+                      </button>
+                      <button onClick={()=>setCalView({month:new Date().getMonth(),year:new Date().getFullYear()})}
+                        style={{padding:'0.35rem 0.75rem', borderRadius:'8px', fontFamily:F_MONO, fontSize:'0.65rem', letterSpacing:'0.08em', textTransform:'uppercase', fontWeight:600, cursor:'pointer', background:'var(--gold-pale)', color:'var(--gold)', border:'1px solid var(--gold-border)'}}>
+                        Today
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Day headers */}
+                  <div style={{display:'grid', gridTemplateColumns:'repeat(7,1fr)', borderBottom:'1px solid var(--border)'}}>
+                    {CAL_DAYS.map(d=>(
+                      <div key={d} style={{padding:'0.625rem', textAlign:'center', fontFamily:F_MONO, fontSize:'0.65rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--text-faint)', fontWeight:600,
+                        borderRight: d !== 'Sat' ? '1px solid var(--border)' : 'none',
+                      }}>{d}</div>
+                    ))}
+                  </div>
+
+                  {/* Day cells */}
+                  <div style={{display:'grid', gridTemplateColumns:'repeat(7,1fr)'}}>
+                    {cells.map((day, i)=>{
+                      if (!day) return (
+                        <div key={`empty-${i}`} style={{minHeight:'90px', borderRight:'1px solid var(--border)', borderBottom:'1px solid var(--border)', background:'var(--bg-inset)', opacity:0.4,
+                          ...(i%7===6 ? {borderRight:'none'} : {})
+                        }}/>
+                      )
+                      const dateStr = `${calView.year}-${String(calView.month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`
+                      const dayAppts = byDate[dateStr] || []
+                      const isToday = dateStr === todayStr
+                      const hasAppts = dayAppts.length > 0
+                      const isLastCol = (firstDay + day - 1) % 7 === 6
+                      const totalRows = Math.ceil(cells.length / 7)
+                      const currentRow = Math.floor((firstDay + day - 1) / 7)
+                      const isLastRow = currentRow === totalRows - 1
+
+                      return (
+                        <div key={dateStr}
+                          onClick={()=>{ if(hasAppts) setCalModal({date:dateStr, appts:dayAppts}) }}
+                          style={{
+                            minHeight:'90px', padding:'0.5rem',
+                            borderRight: isLastCol ? 'none' : '1px solid var(--border)',
+                            borderBottom: isLastRow ? 'none' : '1px solid var(--border)',
+                            background: isToday ? (isDark?'rgba(201,168,76,0.07)':'rgba(184,146,42,0.05)') : 'var(--bg-surface)',
+                            cursor: hasAppts ? 'pointer' : 'default',
+                            transition:'background 0.15s',
+                            position:'relative',
+                          }}
+                          onMouseEnter={e=>{ if(hasAppts)(e.currentTarget as HTMLDivElement).style.background=isDark?'rgba(255,255,255,0.04)':'rgba(0,0,0,0.02)' }}
+                          onMouseLeave={e=>{ (e.currentTarget as HTMLDivElement).style.background=isToday?(isDark?'rgba(201,168,76,0.07)':'rgba(184,146,42,0.05)'):'var(--bg-surface)' }}
+                        >
+                          {/* Day number */}
+                          <div style={{
+                            width:'26px', height:'26px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center',
+                            fontFamily:F_NUM, fontSize:'0.82rem', fontWeight: isToday?700:400,
+                            background: isToday ? 'var(--gold)' : 'transparent',
+                            color: isToday ? '#fff' : 'var(--text-primary)',
+                            marginBottom:'6px', flexShrink:0,
+                          }}>{day}</div>
+
+                          {/* Appointment pills */}
+                          <div style={{display:'flex', flexDirection:'column', gap:'3px'}}>
+                            {dayAppts.slice(0,3).map((a,idx)=>(
+                              <div key={idx} style={{
+                                display:'flex', alignItems:'center', gap:'4px',
+                                padding:'2px 5px', borderRadius:'4px',
+                                background: SS[a.status].bg,
+                                border:`1px solid ${SS[a.status].border}`,
+                                overflow:'hidden',
+                              }}>
+                                <div style={{width:'5px', height:'5px', borderRadius:'50%', background:STATUS_DOT[a.status], flexShrink:0}}/>
+                                <span style={{fontFamily:F_BODY, fontSize:'0.65rem', color:SS[a.status].color, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', fontWeight:500}}>
+                                  {a.first_name} {a.last_name}
+                                </span>
+                              </div>
+                            ))}
+                            {dayAppts.length > 3 && (
+                              <div style={{padding:'2px 5px', borderRadius:'4px', background:'var(--bg-raised)', border:'1px solid var(--border)'}}>
+                                <span style={{fontFamily:F_MONO, fontSize:'0.6rem', color:'var(--text-faint)', letterSpacing:'0.06em'}}>+{dayAppts.length-3} more</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })()}
 
             {/* Messages list */}
             {msgTab&&(
@@ -940,7 +1096,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
             {/* Add Record + Transaction History */}
             <div className="admin-bottom-grid">
               {/* Form */}
-              <div style={{...CARD, padding:'1.75rem', display:'flex', flexDirection:'column', position:'relative', overflowX:'auto', overflowY:'visible'}}>
+              <div style={{...CARD, padding:'1.75rem', display:'flex', flexDirection:'column', position:'relative', overflow:'hidden'}}>
                 <div style={{position:'absolute', top:0, left:0, right:0, height:'3px', background:'linear-gradient(90deg, var(--gold), transparent)'}}/>
                 <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'1.5rem'}}>
                   <div style={{width:'32px', height:'32px', borderRadius:'8px', background:'var(--gold-pale)', border:'1px solid var(--gold-border)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
@@ -1085,7 +1241,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
               </div>
 
               {/* Transaction History */}
-              <div style={{...CARD, display:'flex', flexDirection:'column', minHeight:0, flex:1, borderTop:'3px solid var(--gold)', overflow:'hidden'}}>
+              <div style={{...CARD, display:'flex', flexDirection:'column', minHeight:0, flex:1, borderTop:'3px solid var(--gold)'}}>
                 <div style={{padding:'1.25rem 1.5rem', borderBottom:'1px solid var(--border)', flexShrink:0}}>
                   <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.875rem'}}>
                     <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
@@ -1175,6 +1331,59 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
         )}
       </div>
 
+      {/* ══ CALENDAR DAY MODAL ══ */}
+      {calModal&&(
+        <div style={{position:'fixed', inset:0, zIndex:60, display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem', background:'rgba(0,0,0,0.65)', backdropFilter:'blur(6px)'}}
+          onClick={e=>{if(e.target===e.currentTarget)setCalModal(null)}}>
+          <div className="admin-modal-inner" style={{...CARD, width:'100%', maxWidth:'520px', maxHeight:'85vh', overflowY:'auto', border:'1px solid var(--border-strong)'}}>
+            <div style={{position:'sticky', top:0, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'1.125rem 1.5rem', borderBottom:'1px solid var(--border)', background:'var(--bg-surface)', zIndex:1}}>
+              <div>
+                <p style={{fontFamily:F_BODY, fontWeight:600, fontSize:'1.1rem', color:'var(--text-primary)'}}>
+                  {format(parseISO(calModal.date), 'EEEE, MMMM d, yyyy')}
+                </p>
+                <p style={{fontFamily:F_MONO, fontSize:'0.65rem', color:'var(--text-faint)', marginTop:'2px', letterSpacing:'0.08em'}}>
+                  {calModal.appts.length} APPOINTMENT{calModal.appts.length!==1?'S':''}
+                </p>
+              </div>
+              <button onClick={()=>setCalModal(null)} style={{color:'var(--text-muted)', cursor:'pointer', background:'none', border:'none'}}><X size={18}/></button>
+            </div>
+            <div style={{padding:'1.25rem', display:'flex', flexDirection:'column', gap:'0.75rem'}}>
+              {calModal.appts.map(a=>{
+                const ax = a as Appointment & Record<string,unknown>
+                return (
+                  <div key={a.id} style={{...CARD, padding:'1rem 1.25rem', borderLeft:`3px solid ${SS[a.status].color}`}}>
+                    <div style={{display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:'0.75rem', marginBottom:'0.5rem'}}>
+                      <div>
+                        <p style={{fontFamily:F_BODY, fontWeight:600, fontSize:'0.95rem', color:'var(--text-primary)'}}>{a.first_name} {a.last_name}</p>
+                        <p style={{fontFamily:F_BODY, fontSize:'0.8rem', color:'var(--text-faint)', marginTop:'2px'}}>{ax.contact_number as string || ax.email as string || '—'}</p>
+                      </div>
+                      <Badge s={a.status}/>
+                    </div>
+                    <div style={{display:'flex', gap:'1rem', flexWrap:'wrap'}}>
+                      <div>
+                        <p style={{fontFamily:F_MONO, fontSize:'0.6rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--text-faint)', marginBottom:'2px'}}>Issue</p>
+                        <p style={{fontFamily:F_BODY, fontSize:'0.85rem', color:'var(--text-secondary)'}}>{a.issue_type}</p>
+                      </div>
+                      {ax.appointment_time && (
+                        <div>
+                          <p style={{fontFamily:F_MONO, fontSize:'0.6rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--text-faint)', marginBottom:'2px'}}>Time</p>
+                          <p style={{fontFamily:F_BODY, fontSize:'0.85rem', color:'var(--text-secondary)'}}>{formatTime(ax.appointment_time as string)}</p>
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={()=>{ setCalModal(null); setSelected(a); setNotes(a.notes||''); setDateVal((a as Record<string,unknown>).appointment_date as string||'') }}
+                      style={{marginTop:'0.75rem', display:'flex', alignItems:'center', gap:'5px', padding:'0.35rem 0.8rem', borderRadius:'7px', fontFamily:F_BODY, fontSize:'0.82rem', fontWeight:500, cursor:'pointer', background:'var(--gold-pale)', color:'var(--gold)', border:'1px solid var(--gold-border)'}}>
+                      <Eye size={12}/> View Full Details
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ══ APPOINTMENT MODAL ══ */}
       {selected&&(
         <div style={{position:'fixed', inset:0, zIndex:60, display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem', background:'rgba(0,0,0,0.65)', backdropFilter:'blur(6px)'}}
@@ -1196,7 +1405,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                   ['Email',(selected as Record<string,unknown>).email as string||'—',false],
                   ['Contact',(selected as Record<string,unknown>).contact_number as string||'—',false],
                   ['Preferred Date',selected.appointment_date?format(new Date(selected.appointment_date+'T00:00:00'),'MMMM d, yyyy'):'—',false],
-                  ['Preferred Time',(selected as Record<string,unknown>).appointment_time as string||'—',false],
+                  ['Preferred Time', formatTime((selected as Record<string,unknown>).appointment_time as string||''), false],
                 ] as [string,string,boolean][]).map(([lbl2,val,full])=>(
                   <div key={lbl2} style={full?{gridColumn:'1 / -1'}:{}}>
                     <p style={{...LBL, marginBottom:'4px'}}>{lbl2}</p>
