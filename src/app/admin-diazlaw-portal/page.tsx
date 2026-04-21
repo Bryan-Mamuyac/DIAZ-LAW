@@ -704,13 +704,13 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
       }}>
         <div className="admin-header-inner">
           {/* Brand */}
-          <div style={{display:'flex', alignItems:'center', gap:'10px', flexShrink:0}}>
-            <div style={{width:'36px', height:'36px', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', background: iconBg, border:`1px solid ${iconBorder}`, transition:'background 0.35s ease'}}>
-              <Scale size={17} color="#C9A84C"/>
+          <div style={{display:'flex', alignItems:'center', gap:'8px', flexShrink:0, minWidth:0}}>
+            <div style={{width:'32px', height:'32px', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, background: iconBg, border:`1px solid ${iconBorder}`, transition:'background 0.35s ease'}}>
+              <Scale size={15} color="#C9A84C"/>
             </div>
-            <div style={{lineHeight:1}}>
-              <div style={{fontFamily:F_SERIF, fontWeight:600, fontSize:'1rem', color: brandTitle, letterSpacing:'0.05em', transition:'color 0.35s ease'}}>DIAZ LAW OFFICE</div>
-              <div className="admin-brand-subtitle" style={{fontFamily:F_MONO, fontSize:'0.52rem', letterSpacing:'0.18em', textTransform:'uppercase', color: brandSub, marginTop:'3px', transition:'color 0.35s ease'}}>Admin Portal</div>
+            <div style={{lineHeight:1, minWidth:0}}>
+              <div style={{fontFamily:F_SERIF, fontWeight:600, fontSize:'clamp(0.7rem, 2.5vw, 1rem)', color: brandTitle, letterSpacing:'0.04em', transition:'color 0.35s ease', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>DIAZ LAW</div>
+              <div className="admin-brand-subtitle" style={{fontFamily:F_MONO, fontSize:'0.48rem', letterSpacing:'0.14em', textTransform:'uppercase', color: brandSub, marginTop:'3px', transition:'color 0.35s ease', whiteSpace:'nowrap'}}>Admin Portal</div>
             </div>
           </div>
 
@@ -1243,17 +1243,17 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
               {/* Transaction History */}
               <div style={{...CARD, display:'flex', flexDirection:'column', minHeight:0, flex:1, borderTop:'3px solid var(--gold)'}}>
                 <div style={{padding:'1.25rem 1.5rem', borderBottom:'1px solid var(--border)', flexShrink:0}}>
-                  <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.875rem'}}>
+                  <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.75rem', marginBottom:'0.875rem', flexWrap:'wrap'}}>
                     <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
-                      <div style={{width:'32px', height:'32px', borderRadius:'8px', background:'var(--gold-pale)', border:'1px solid var(--gold-border)', display:'flex', alignItems:'center', justifyContent:'center'}}>
+                      <div style={{width:'32px', height:'32px', borderRadius:'8px', background:'var(--gold-pale)', border:'1px solid var(--gold-border)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
                         <Filter size={13} style={{color:'var(--gold)'}}/>
                       </div>
                       <p style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700}}>Transaction History</p>
                     </div>
-                    <button onClick={exportFinCSV} style={{display:'flex', alignItems:'center', gap:'6px', padding:'0.5rem 1.1rem', borderRadius:'8px', fontFamily:F_BODY, fontSize:'0.85rem', fontWeight:600, cursor:'pointer', background:'var(--gold)', border:'none', color:'#fff', boxShadow:'0 2px 8px rgba(184,146,42,0.3)', transition:'opacity 0.2s'}}
+                    <button onClick={exportFinCSV} style={{display:'flex', alignItems:'center', gap:'6px', padding:'0.5rem 0.75rem', borderRadius:'8px', fontFamily:F_BODY, fontSize:'0.82rem', fontWeight:600, cursor:'pointer', background:'var(--gold)', border:'none', color:'#fff', boxShadow:'0 2px 8px rgba(184,146,42,0.3)', transition:'opacity 0.2s', flexShrink:0, whiteSpace:'nowrap'}}
                       onMouseEnter={e=>(e.currentTarget as HTMLButtonElement).style.opacity='0.85'}
                       onMouseLeave={e=>(e.currentTarget as HTMLButtonElement).style.opacity='1'}>
-                      <Download size={13}/> Export .xlsx
+                      <Download size={13}/> <span className="admin-brand-subtitle">Export .xlsx</span>
                     </button>
                   </div>
                   <div style={{display:'flex', gap:'8px', flexWrap:'wrap'}}>

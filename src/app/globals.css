@@ -517,8 +517,8 @@ body::after {
     padding: 1rem 0.875rem;
   }
   .admin-header-inner {
-    padding: 0 0.875rem;
-    gap: 6px;
+    padding: 0 0.75rem;
+    gap: 4px;
   }
   .admin-stat-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -540,11 +540,21 @@ body::after {
     gap: 0.875rem;
   }
   .admin-nav-tabs {
-    gap: 3px;
+    gap: 2px;
   }
   /* Hide text labels on mobile — icons still show */
   .admin-brand-subtitle {
     display: none;
+  }
+  /* Nav tab buttons — icon only on mobile */
+  .admin-nav-tabs button {
+    padding: 0.45rem 0.55rem !important;
+    min-width: 36px;
+  }
+  /* Right icon buttons — tighter */
+  .admin-icon-btn-wrap button {
+    min-width: 36px !important;
+    padding: 0.3rem 0.4rem !important;
   }
   /* Shrink stat card numbers on mobile */
   .admin-stat-num {
