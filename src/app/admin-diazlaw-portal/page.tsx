@@ -846,7 +846,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                       <div style={{display:'flex', alignItems:'center', gap:'8px', flexWrap:'wrap', marginBottom:'4px'}}>
                         <p style={{fontWeight:600, fontSize:'0.95rem', color:'var(--text-primary)', fontFamily:F_BODY}}>{msg.name}</p>
                         <p style={{fontSize:'0.82rem', color:'var(--text-faint)', fontFamily:F_BODY}}>{msg.email}</p>
-                        {(msg as Record<string,unknown>).contact_number && <p style={{fontSize:'0.82rem', color:'var(--text-faint)', fontFamily:F_BODY}}>· {(msg as Record<string,unknown>).contact_number as string}</p>}
+                        {!!(msg as Record<string,unknown>).contact_number && <p style={{fontSize:'0.82rem', color:'var(--text-faint)', fontFamily:F_BODY}}>· {String((msg as Record<string,unknown>).contact_number)}</p>}
                         {!msg.read&&<span style={{background:'var(--gold-pale)', color:'var(--gold)', border:'1px solid var(--gold-border)', padding:'0.1rem 0.45rem', borderRadius:'4px', fontFamily:F_MONO, fontSize:'0.6rem', fontWeight:600, letterSpacing:'0.1em', textTransform:'uppercase'}}>New</span>}
                       </div>
                       <p style={{fontSize:'0.9rem', color:'var(--text-secondary)', fontWeight:500, marginBottom:'3px', fontFamily:F_BODY}}>{msg.subject}</p>
@@ -1239,11 +1239,11 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
               <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem'}}>
                 <div><p style={LBL}>From</p><p style={{fontSize:'0.95rem', color:'var(--text-primary)', fontWeight:600, fontFamily:F_BODY}}>{selMsg.name}</p></div>
                 <div><p style={LBL}>Email</p><a href={`mailto:${selMsg.email}`} style={{fontSize:'0.95rem', color:'var(--gold)', fontWeight:500, fontFamily:F_BODY}}>{selMsg.email}</a></div>
-                {(selMsg as Record<string,unknown>).contact_number && (
+                {!!(selMsg as Record<string,unknown>).contact_number && (
                   <div style={{gridColumn:'1/-1'}}>
                     <p style={LBL}>Contact Number</p>
-                    <a href={`tel:${((selMsg as Record<string,unknown>).contact_number as string).replace(/\s/g,'')}`} style={{fontSize:'0.95rem', color:'var(--gold)', fontWeight:500, fontFamily:F_BODY}}>
-                      {(selMsg as Record<string,unknown>).contact_number as string}
+                    <a href={`tel:${String((selMsg as Record<string,unknown>).contact_number).replace(/\s/g,'')}`} style={{fontSize:'0.95rem', color:'var(--gold)', fontWeight:500, fontFamily:F_BODY}}>
+                      {String((selMsg as Record<string,unknown>).contact_number)}
                     </a>
                   </div>
                 )}
