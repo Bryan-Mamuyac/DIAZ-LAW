@@ -11,7 +11,6 @@ export type Appointment = {
   first_name: string
   last_name: string
   address: string
-  age: number
   issue_type: string
   description?: string
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled'

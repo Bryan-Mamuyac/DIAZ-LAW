@@ -53,16 +53,16 @@ export function Navbar() {
         <div className="flex items-center justify-between h-[68px]">
 
           {/* ── Text Logo ── */}
-          <Link href="/" className="flex-shrink-0 flex items-center gap-2.5 group">
+          <Link href="/" className="flex-shrink-0 flex items-center gap-2 group">
             {/* Icon badge */}
             <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-200"
+              className="w-8 h-8 md:w-9 md:h-9 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-200"
               style={{
                 background: iconBg,
                 border: '1px solid var(--gold-border)',
               }}
             >
-              <Scale size={17} style={{ color: 'var(--gold)' }} />
+              <Scale size={15} style={{ color: 'var(--gold)' }} />
             </div>
 
             {/* Text */}
@@ -70,17 +70,18 @@ export function Navbar() {
               <div
                 className="font-display font-semibold tracking-wide"
                 style={{
-                  fontSize: '1rem',
+                  fontSize: 'clamp(0.7rem, 3.5vw, 1rem)',
                   color: logoTextColor,
                   letterSpacing: '0.05em',
                   lineHeight: 1.1,
                   transition: 'color 0.3s ease',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 DIAZ LAW OFFICE
               </div>
               <div
-                className="font-mono-dm tracking-widest uppercase"
+                className="font-mono-dm tracking-widest uppercase hidden sm:block"
                 style={{
                   fontSize: '0.55rem',
                   color: logoSubColor,

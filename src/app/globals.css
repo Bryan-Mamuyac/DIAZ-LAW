@@ -577,6 +577,26 @@ body::after {
 .admin-table-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-border) transparent;
+}
+.admin-table-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+.admin-table-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-table-scroll::-webkit-scrollbar-thumb {
+  background: var(--gold-border);
+  border-radius: 2px;
+}
+
+/* ── Admin bottom grid mobile fix ── */
+@media (max-width: 768px) {
+  .admin-bottom-grid > div:first-child {
+    min-width: 0;
+    width: 100%;
+  }
 }
 
 /* ── Admin card padding shrink on mobile ── */

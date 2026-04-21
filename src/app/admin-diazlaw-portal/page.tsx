@@ -940,7 +940,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
             {/* Add Record + Transaction History */}
             <div className="admin-bottom-grid">
               {/* Form */}
-              <div style={{...CARD, padding:'1.75rem', display:'flex', flexDirection:'column', position:'relative', overflow:'hidden'}}>
+              <div style={{...CARD, padding:'1.75rem', display:'flex', flexDirection:'column', position:'relative', overflowX:'auto', overflowY:'visible'}}>
                 <div style={{position:'absolute', top:0, left:0, right:0, height:'3px', background:'linear-gradient(90deg, var(--gold), transparent)'}}/>
                 <div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'1.5rem'}}>
                   <div style={{width:'32px', height:'32px', borderRadius:'8px', background:'var(--gold-pale)', border:'1px solid var(--gold-border)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
@@ -1085,7 +1085,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
               </div>
 
               {/* Transaction History */}
-              <div style={{...CARD, display:'flex', flexDirection:'column', minHeight:0, flex:1, borderTop:'3px solid var(--gold)'}}>
+              <div style={{...CARD, display:'flex', flexDirection:'column', minHeight:0, flex:1, borderTop:'3px solid var(--gold)', overflow:'hidden'}}>
                 <div style={{padding:'1.25rem 1.5rem', borderBottom:'1px solid var(--border)', flexShrink:0}}>
                   <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.875rem'}}>
                     <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
