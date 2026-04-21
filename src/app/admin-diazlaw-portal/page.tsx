@@ -1054,8 +1054,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
               </div>
 
               {/* Transaction History */}
-              <div style={{...CARD, overflow:'hidden', display:'flex', flexDirection:'column', minHeight:0, flex:1, position:'relative'}}>
-                <div style={{position:'absolute', top:0, left:0, right:0, height:'3px', background:'linear-gradient(90deg, var(--gold), transparent)'}}/>
+              <div style={{...CARD, display:'flex', flexDirection:'column', minHeight:0, flex:1, borderTop:'3px solid var(--gold)'}}>
                 <div style={{padding:'1.25rem 1.5rem', borderBottom:'1px solid var(--border)', flexShrink:0}}>
                   <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.875rem'}}>
                     <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
