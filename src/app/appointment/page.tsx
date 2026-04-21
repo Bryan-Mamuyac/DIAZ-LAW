@@ -56,7 +56,7 @@ const TIME_SLOTS = [
   { label: '5:00 PM',  value: '17:00', period: 'PM' },
 ]
 
-/* ── PH Calendar Component ── */
+/* ── PH Calendar ── */
 const PH_MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
@@ -105,7 +105,7 @@ function DatePicker({
   const isDisabled = (d: Date) => {
     const t = new Date(); t.setHours(0,0,0,0)
     const day = d.getDay()
-    return d < t || day === 0 || day === 6 // disable past + Sat + Sun
+    return d < t || day === 0 || day === 6
   }
 
   const fmt = (d: Date) =>
@@ -117,7 +117,6 @@ function DatePicker({
 
   return (
     <div className="relative">
-      {/* Trigger */}
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -128,7 +127,6 @@ function DatePicker({
         <CalendarCheck size={15} style={{ color: 'var(--gold)', flexShrink: 0 }} />
       </button>
 
-      {/* Dropdown calendar */}
       {open && (
         <div
           className="absolute top-full left-0 mt-2 z-50 rounded-xl overflow-hidden"
@@ -136,10 +134,9 @@ function DatePicker({
             background: 'var(--bg-surface)',
             border: '1px solid var(--border-strong)',
             boxShadow: 'var(--shadow-lg)',
-            width: '300px',
+            width: 'min(300px, calc(100vw - 2.5rem))',
           }}
         >
-          {/* Header */}
           <div
             className="flex items-center justify-between px-4 py-3"
             style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg-raised)' }}
@@ -159,7 +156,6 @@ function DatePicker({
             </button>
           </div>
 
-          {/* Day headers */}
           <div className="grid grid-cols-7 px-3 pt-2">
             {DAYS.map(d => (
               <div key={d} className="text-center font-mono-dm py-1"
@@ -169,7 +165,6 @@ function DatePicker({
             ))}
           </div>
 
-          {/* Day cells */}
           <div className="grid grid-cols-7 px-3 pb-3 gap-y-0.5">
             {days.map((d, i) => {
               if (!d) return <div key={i} />
@@ -272,7 +267,8 @@ export default function AppointmentPage() {
       if (error) throw error
       setSuccess(true)
       setForm(INIT)
-    } catch {
+    } catch (err) {
+      console.error('Appointment submit error:', err)
       toast.error('Something went wrong. Please try again.')
     } finally {
       setLoading(false)
@@ -283,9 +279,9 @@ export default function AppointmentPage() {
 
   if (success) return (
     <>
-      <div className="min-h-screen flex items-center justify-center px-5 pt-[68px]"
+      <div className="min-h-screen flex items-center justify-center px-4 pt-[68px]"
         style={{ background: 'var(--bg-canvas)' }}>
-        <div className="card-luxury p-12 max-w-md w-full text-center">
+        <div className="card-luxury p-8 sm:p-12 max-w-md w-full text-center">
           <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
             style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)' }}>
             <CheckCircle2 size={30} className="text-green-500" />
@@ -318,15 +314,15 @@ export default function AppointmentPage() {
     <>
       <div className="pt-[68px]" style={{ background: 'var(--bg-canvas)' }}>
         {/* Page header */}
-        <div className="py-16 border-b"
+        <div className="py-10 sm:py-16 border-b"
           style={{ background: 'var(--bg-inset)', borderColor: 'var(--border)' }}>
           <div className="container-site">
-            <p className="eyebrow mb-5">Online Booking</p>
+            <p className="eyebrow mb-4 sm:mb-5">Online Booking</p>
             <h1 className="font-display font-light leading-tight"
-              style={{ fontSize: 'clamp(2.5rem, 5vw, 3.75rem)', color: 'var(--text-primary)' }}>
+              style={{ fontSize: 'clamp(2rem, 5vw, 3.75rem)', color: 'var(--text-primary)' }}>
               Book an <em>Appointment</em>
             </h1>
-            <p className="mt-4 text-base max-w-lg"
+            <p className="mt-3 sm:mt-4 text-base max-w-lg"
               style={{ color: 'var(--text-muted)', fontWeight: 300 }}>
               Fill out the form and we&apos;ll confirm your schedule promptly.
               No account or login required.
@@ -334,23 +330,23 @@ export default function AppointmentPage() {
           </div>
         </div>
 
-        <div className="container-site py-16">
+        <div className="container-site py-8 sm:py-16">
           {/* Notice */}
-          <div className="max-w-2xl mx-auto mb-8 flex items-start gap-3 px-5 py-4 rounded-lg"
+          <div className="max-w-2xl mx-auto mb-6 flex items-start gap-3 px-4 py-3 sm:px-5 sm:py-4 rounded-lg"
             style={{ background: 'var(--gold-pale)', border: '1px solid var(--gold-border)' }}>
             <AlertCircle size={16} style={{ color: 'var(--gold)', flexShrink: 0, marginTop: 2 }} />
-            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <p className="text-xs sm:text-sm" style={{ color: 'var(--text-secondary)' }}>
               All information is kept strictly confidential and used only to process your appointment.
               Fields marked <span className="text-red-500 font-semibold">*</span> are required.
             </p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="max-w-2xl mx-auto">
-            <div className="card-luxury p-8 sm:p-10 space-y-7">
+          <form onSubmit={handleSubmit} noValidate className="max-w-2xl mx-auto">
+            <div className="card-luxury p-5 sm:p-8 lg:p-10 space-y-6 sm:space-y-7">
 
-              {/* Name */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {/* Name row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <label className="label-lux">First Name <span className="text-red-500">*</span></label>
                   <input type="text" name="first_name" value={form.first_name}
@@ -379,7 +375,7 @@ export default function AppointmentPage() {
                 <label className="label-lux">Email Address <span className="text-red-500">*</span></label>
                 <input type="email" name="email" value={form.email}
                   onChange={handleChange} placeholder="e.g. juan@email.com"
-                  className="input-luxury" />
+                  className="input-luxury" autoComplete="email" />
                 {errors.email && <p className="text-red-500 text-xs mt-1.5">{errors.email}</p>}
               </div>
 
@@ -388,7 +384,7 @@ export default function AppointmentPage() {
                 <label className="label-lux">Contact Number <span className="text-red-500">*</span></label>
                 <input type="tel" name="contact_number" value={form.contact_number}
                   onChange={handleChange} placeholder="e.g. 09XX XXX XXXX"
-                  className="input-luxury" />
+                  className="input-luxury" autoComplete="tel" />
                 {errors.contact_number && <p className="text-red-500 text-xs mt-1.5">{errors.contact_number}</p>}
               </div>
 
@@ -419,10 +415,10 @@ export default function AppointmentPage() {
                       key={p}
                       type="button"
                       onClick={() => { setTimePeriod(p); setForm(prev => ({ ...prev, appointment_time: '' })) }}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2.5 rounded-lg text-xs font-semibold transition-all"
                       style={{
                         fontFamily: "'DM Mono', monospace",
-                        letterSpacing: '0.1em',
+                        letterSpacing: '0.08em',
                         background: timePeriod === p ? 'var(--gold)' : 'var(--bg-raised)',
                         color:      timePeriod === p ? '#fff'        : 'var(--text-muted)',
                         border: `1px solid ${timePeriod === p ? 'var(--gold)' : 'var(--border)'}`,
@@ -434,7 +430,7 @@ export default function AppointmentPage() {
                   ))}
                 </div>
 
-                {/* Time grid */}
+                {/* Time grid — 3 cols mobile, 4 cols sm+ */}
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                   {filteredSlots.map(slot => (
                     <button
@@ -465,7 +461,8 @@ export default function AppointmentPage() {
                 <div className="relative">
                   <select name="issue_type" value={form.issue_type}
                     onChange={handleChange}
-                    className="input-luxury appearance-none pr-10 cursor-pointer">
+                    className="input-luxury appearance-none pr-10 cursor-pointer"
+                    style={{ fontSize: '0.875rem' }}>
                     <option value="">— Select appointment type —</option>
                     {GROUPS.map(g => (
                       <optgroup key={g} label={g}>
@@ -500,8 +497,11 @@ export default function AppointmentPage() {
 
               <div className="rule-gold" />
 
-              <button type="submit" disabled={loading}
-                className="btn-gold w-full justify-center py-4 text-sm disabled:opacity-60 disabled:cursor-not-allowed">
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-gold w-full justify-center py-4 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+              >
                 {loading
                   ? <><Loader2 size={16} className="animate-spin" /> Submitting...</>
                   : <><CalendarCheck size={16} /> Submit Appointment Request</>

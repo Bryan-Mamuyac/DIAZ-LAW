@@ -74,9 +74,13 @@
 /* ══════════════════════════════════════
    BASE
 ══════════════════════════════════════ */
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
 
 body {
+  overflow-x: hidden;
   background-color: var(--bg-canvas);
   color: var(--text-primary);
   font-family: 'DM Sans', 'Helvetica Neue', sans-serif;
@@ -217,6 +221,13 @@ body::after {
     outline: none;
     transition: border-color 0.2s, box-shadow 0.2s;
     appearance: none;
+    /* Prevent iOS from zooming on focus — must be at least 16px on mobile */
+    -webkit-appearance: none;
+  }
+  @media (max-width: 768px) {
+    .input-luxury {
+      font-size: 1rem; /* 16px min prevents iOS zoom */
+    }
   }
   .input-luxury:focus {
     border-color: var(--gold);
