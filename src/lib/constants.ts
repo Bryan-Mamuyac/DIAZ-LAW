@@ -14,6 +14,7 @@ export const ISSUE_TYPES = [
   { group: 'Notarial Services', label: 'Jurat / Sworn Statement' },
   { group: 'Notarial Services', label: 'Certification / Certificate Authentication' },
   { group: 'Notarial Services', label: 'Last Will and Testament' },
+  { group: 'Notarial Services', label: 'Student Internship Agreement (SIA)' },
 
   // Civil / Family Law
   { group: 'Civil & Family Law', label: 'Legal Separation' },

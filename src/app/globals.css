@@ -487,56 +487,109 @@ body::after {
   align-items: center;
   justify-content: space-between;
   width: 100%;
+  gap: 8px;
 }
 
+/* ── Tablet ── */
 @media (max-width: 1024px) {
   .admin-bottom-grid {
     grid-template-columns: 1fr;
   }
+  .admin-chart-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
+/* ── Mobile ── */
 @media (max-width: 768px) {
   .admin-page-wrap {
-    padding: 1.25rem 1rem;
+    padding: 1rem 0.875rem;
   }
   .admin-header-inner {
-    padding: 0 1rem;
-    gap: 8px;
+    padding: 0 0.875rem;
+    gap: 6px;
   }
   .admin-stat-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.75rem;
-    margin-bottom: 1.25rem;
+    gap: 0.625rem;
+    margin-bottom: 1rem;
   }
   .admin-fin-stat-grid {
     grid-template-columns: 1fr 1fr;
-    gap: 0.75rem;
-    margin-bottom: 1.25rem;
+    gap: 0.625rem;
+    margin-bottom: 1rem;
   }
   .admin-chart-grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
-    margin-bottom: 1.25rem;
+    gap: 0.875rem;
+    margin-bottom: 1rem;
   }
   .admin-bottom-grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 0.875rem;
   }
   .admin-nav-tabs {
-    gap: 4px;
+    gap: 3px;
   }
-  /* Hide text labels on mobile — icons still visible */
+  /* Hide text labels on mobile — icons still show */
   .admin-brand-subtitle {
     display: none;
   }
+  /* Shrink stat card numbers on mobile */
+  .admin-stat-num {
+    font-size: 1.875rem !important;
+  }
+  /* Shrink financial summary numbers */
+  .admin-fin-num {
+    font-size: 1.6rem !important;
+  }
 }
 
+/* ── Small mobile ── */
 @media (max-width: 480px) {
+  .admin-page-wrap {
+    padding: 0.875rem 0.75rem;
+  }
+  .admin-header-inner {
+    padding: 0 0.75rem;
+  }
   .admin-fin-stat-grid {
     grid-template-columns: 1fr;
   }
-  .admin-page-wrap {
-    padding: 1rem 0.75rem;
+  .admin-stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+}
+
+/* ── Admin table mobile scroll ── */
+.admin-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Admin card padding shrink on mobile ── */
+@media (max-width: 768px) {
+  .admin-card-pad {
+    padding: 1.125rem !important;
+  }
+  /* Make modals full-screen friendly on mobile */
+  .admin-modal-inner {
+    max-height: 92vh;
+    overflow-y: auto;
+    border-radius: 16px;
+    margin: 0.5rem;
+    width: calc(100% - 1rem) !important;
+    max-width: calc(100% - 1rem) !important;
+  }
+  /* Shrink header height on mobile */
+  header[style*="0A1628"] {
+    height: 56px !important;
+    min-height: 56px !important;
+  }
+  /* Compact icon buttons on mobile */
+  .admin-icon-btn-wrap {
+    gap: 2px !important;
   }
 }
 

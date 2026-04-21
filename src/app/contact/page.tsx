@@ -9,8 +9,8 @@ import { Footer } from '@/components/Footer'
 import { Phone, Mail, Facebook, Send, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-type FormData = { name: string; email: string; subject: string; message: string }
-const INIT: FormData = { name: '', email: '', subject: '', message: '' }
+type FormData = { name: string; email: string; contact_number: string; subject: string; message: string }
+const INIT: FormData = { name: '', email: '', contact_number: '', subject: '', message: '' }
 
 const CHANNELS = [
   {
@@ -65,6 +65,7 @@ export default function ContactPage() {
     try {
       const { error } = await supabase.from('contact_messages').insert([{
         name: form.name.trim(), email: form.email.trim(),
+        contact_number: form.contact_number.trim() || null,
         subject: form.subject.trim(), message: form.message.trim(), read: false,
       }])
       if (error) throw error
@@ -176,6 +177,13 @@ export default function ContactPage() {
                         onChange={handleChange} placeholder="you@example.com" className="input-luxury" />
                       {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="label-lux">Contact Number <span style={{color:'var(--text-faint)', fontFamily:'inherit', textTransform:'none', letterSpacing:'normal', fontSize:'0.7rem'}}>(optional)</span></label>
+                    <input type="tel" name="contact_number" value={form.contact_number}
+                      onChange={handleChange} placeholder="e.g. 0995 362 2071"
+                      className="input-luxury" />
                   </div>
 
                   <div>

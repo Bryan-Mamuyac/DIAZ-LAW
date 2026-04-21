@@ -27,6 +27,7 @@ export type ContactMessage = {
   created_at?: string
   name: string
   email: string
+  contact_number?: string
   subject: string
   message: string
   read?: boolean

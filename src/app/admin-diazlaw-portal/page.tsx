@@ -156,18 +156,18 @@ function CustomLineChart({ data, fmtPHP, isDark }: { data: ChartPoint[]; fmtPHP:
         {/* Lines (hidden for single point) */}
         {!single && <>
           <path d={lineD('revenue')} fill="none" stroke="#C9A84C" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"/>
-          <path d={lineD('expense')} fill="none" stroke="#DC2626" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"/>
+          <path d={lineD('expense')} fill="none" stroke="#E8707D" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"/>
         </>}
         {/* Dots */}
         {data.map((d,i)=>(
           <g key={i}>
             <circle cx={px(i)} cy={py(d.revenue)} r={5} fill="#C9A84C" stroke={isDark?'#0C1120':'#fff'} strokeWidth={2}/>
-            <circle cx={px(i)} cy={py(d.expense)}  r={5} fill="#DC2626" stroke={isDark?'#0C1120':'#fff'} strokeWidth={2}/>
+            <circle cx={px(i)} cy={py(d.expense)}  r={5} fill="#E8707D" stroke={isDark?'#0C1120':'#fff'} strokeWidth={2}/>
             {/* Value labels on dots */}
             <text x={px(i)} y={py(d.revenue)-10} textAnchor="middle" fontSize={9} fill="#C9A84C" fontFamily="Inter,sans-serif" fontWeight="600">
               {d.revenue>=1000?`₱${(d.revenue/1000).toFixed(0)}k`:`₱${d.revenue}`}
             </text>
-            <text x={px(i)} y={py(d.expense)+18} textAnchor="middle" fontSize={9} fill="#DC2626" fontFamily="Inter,sans-serif" fontWeight="600">
+            <text x={px(i)} y={py(d.expense)+18} textAnchor="middle" fontSize={9} fill="#E8707D" fontFamily="Inter,sans-serif" fontWeight="600">
               {d.expense>=1000?`₱${(d.expense/1000).toFixed(0)}k`:`₱${d.expense}`}
             </text>
             {/* Hover zone */}
@@ -183,12 +183,12 @@ function CustomLineChart({ data, fmtPHP, isDark }: { data: ChartPoint[]; fmtPHP:
           borderRadius:'8px', padding:'0.6rem 0.9rem', pointerEvents:'none', zIndex:10, whiteSpace:'nowrap',
           boxShadow:'0 4px 16px rgba(0,0,0,0.15)'}}>
           <p style={{fontFamily:'Inter,sans-serif', fontSize:'0.78rem', fontWeight:700, color:isDark?'#EDE8DE':'#0A1628', marginBottom:'4px'}}>{tooltip.d.month}</p>
-          <p style={{fontFamily:'Inter,sans-serif', fontSize:'0.82rem', color:'#DC2626', marginBottom:'2px'}}>Expense : {fmtPHP(tooltip.d.expense)}</p>
+          <p style={{fontFamily:'Inter,sans-serif', fontSize:'0.82rem', color:'#E8707D', marginBottom:'2px'}}>Expense : {fmtPHP(tooltip.d.expense)}</p>
           <p style={{fontFamily:'Inter,sans-serif', fontSize:'0.82rem', color:'#C9A84C'}}>Revenue : {fmtPHP(tooltip.d.revenue)}</p>
         </div>
       )}
       <div style={{display:'flex', justifyContent:'center', gap:'1.25rem', marginTop:'0.25rem'}}>
-        {[{color:'#DC2626',label:'Expense'},{color:'#C9A84C',label:'Revenue'}].map(l=>(
+        {[{color:'#E8707D',label:'Expense'},{color:'#C9A84C',label:'Revenue'}].map(l=>(
           <div key={l.label} style={{display:'flex', alignItems:'center', gap:'5px'}}>
             <div style={{width:'20px', height:'3px', background:l.color, borderRadius:'2px'}}/>
             <span style={{fontFamily:'Inter,sans-serif', fontSize:'0.8rem', color:isDark?'rgba(237,232,222,0.65)':'rgba(60,60,60,0.75)'}}>{l.label}</span>
@@ -248,10 +248,10 @@ function CustomBarChart({ data, fmtPHP, isDark }: { data: ChartPoint[]; fmtPHP: 
                 {d.revenue>=1000?`₱${(d.revenue/1000).toFixed(0)}k`:`₱${d.revenue}`}
               </text>}
               {/* Expense bar */}
-              <rect x={bx(i,1)} y={by(d.expense)} width={barW} height={eh} fill="#DC2626" rx={3}
+              <rect x={bx(i,1)} y={by(d.expense)} width={barW} height={eh} fill="#E8707D" rx={3}
                 opacity={tooltip && tooltip.i!==i ? 0.4 : 1}/>
               {/* Expense label above bar */}
-              {d.expense > 0 && <text x={bx(i,1)+barW/2} y={by(d.expense)-4} textAnchor="middle" fontSize={9} fill="#DC2626" fontFamily="Inter,sans-serif" fontWeight="600">
+              {d.expense > 0 && <text x={bx(i,1)+barW/2} y={by(d.expense)-4} textAnchor="middle" fontSize={9} fill="#E8707D" fontFamily="Inter,sans-serif" fontWeight="600">
                 {d.expense>=1000?`₱${(d.expense/1000).toFixed(0)}k`:`₱${d.expense}`}
               </text>}
               <rect x={PL + i*groupW} y={PT} width={groupW} height={cH} fill="transparent"
@@ -269,13 +269,13 @@ function CustomBarChart({ data, fmtPHP, isDark }: { data: ChartPoint[]; fmtPHP: 
             borderRadius:'8px', padding:'0.6rem 0.9rem', pointerEvents:'none', zIndex:10, whiteSpace:'nowrap',
             boxShadow:'0 4px 16px rgba(0,0,0,0.15)'}}>
             <p style={{fontFamily:'Inter,sans-serif', fontSize:'0.78rem', fontWeight:700, color:isDark?'#EDE8DE':'#0A1628', marginBottom:'4px'}}>{tooltip.d.month}</p>
-            <p style={{fontFamily:'Inter,sans-serif', fontSize:'0.82rem', color:'#DC2626', marginBottom:'2px'}}>Expense : {fmtPHP(tooltip.d.expense)}</p>
+            <p style={{fontFamily:'Inter,sans-serif', fontSize:'0.82rem', color:'#E8707D', marginBottom:'2px'}}>Expense : {fmtPHP(tooltip.d.expense)}</p>
             <p style={{fontFamily:'Inter,sans-serif', fontSize:'0.82rem', color:'#C9A84C'}}>Revenue : {fmtPHP(tooltip.d.revenue)}</p>
           </div>
         )
       })()}
       <div style={{display:'flex', justifyContent:'center', gap:'1.25rem', marginTop:'0.25rem'}}>
-        {[{color:'#DC2626',label:'Expense'},{color:'#C9A84C',label:'Revenue'}].map(l=>(
+        {[{color:'#E8707D',label:'Expense'},{color:'#C9A84C',label:'Revenue'}].map(l=>(
           <div key={l.label} style={{display:'flex', alignItems:'center', gap:'5px'}}>
             <div style={{width:'12px', height:'12px', background:l.color, borderRadius:'2px'}}/>
             <span style={{fontFamily:'Inter,sans-serif', fontSize:'0.8rem', color:isDark?'rgba(237,232,222,0.65)':'rgba(60,60,60,0.75)'}}>{l.label}</span>
@@ -686,7 +686,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
     <div style={{minHeight:'100vh', background:'var(--bg-canvas)'}}>
 
       {/* ══ NAVBAR ══ */}
-      <header style={{height:'68px', position:'sticky', top:0, zIndex:50, background:'#0A1628', borderBottom:'1px solid rgba(201,168,76,0.2)', boxShadow:'0 2px 20px rgba(0,0,0,0.4)', display:'flex', alignItems:'center'}}>
+      <header style={{height:'68px', position:'sticky', top:0, zIndex:50, background:'#0A1628', borderBottom:'1px solid rgba(201,168,76,0.2)', boxShadow:'0 2px 20px rgba(0,0,0,0.4)', display:'flex', alignItems:'center', minHeight:'56px'}}>
         <div className="admin-header-inner">
           {/* Brand */}
           <div style={{display:'flex', alignItems:'center', gap:'10px', flexShrink:0}}>
@@ -713,7 +713,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
           </nav>
 
           {/* Right controls */}
-          <div style={{display:'flex', alignItems:'center', gap:'4px'}}>
+          <div className="admin-icon-btn-wrap" style={{display:'flex', alignItems:'center', gap:'4px', flexShrink:0}}>
             <IconBtn icon={<RefreshCw size={15} className={loading?'animate-spin':''}/>} label="Refresh" onClick={fetchAll}/>
             <IconBtn icon={isDark?<Sun size={15}/>:<Moon size={15}/>} label={isDark?'Dark':'Light'} onClick={toggle}/>
             <IconBtn icon={<LogOut size={15}/>} label="Lock" onClick={onLock} danger/>
@@ -741,7 +741,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                     <Icon size={16} style={{color}}/>
                   </div>
                   {/* Use Inter/DM Sans for numbers so "0" looks like 0 not O */}
-                  <p style={{fontFamily:F_NUM, fontWeight:700, fontSize:'2.5rem', color:'var(--text-primary)', lineHeight:1, letterSpacing:'-0.02em'}}>{v}</p>
+                  <p className="admin-stat-num" style={{fontFamily:F_NUM, fontWeight:700, fontSize:'2.5rem', color:'var(--text-primary)', lineHeight:1, letterSpacing:'-0.02em'}}>{v}</p>
                 </div>
               ))}
             </div>
@@ -755,7 +755,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                 </button>
                 <button onClick={()=>setMsgTab(true)} style={{display:'flex', alignItems:'center', gap:'7px', padding:'0.5rem 1.25rem', borderRadius:'8px', cursor:'pointer', fontFamily:F_BODY, fontSize:'0.9rem', fontWeight:500, background:msgTab?'var(--gold)':'var(--bg-surface)', color:msgTab?'#fff':'var(--text-muted)', border:`1px solid ${msgTab?'var(--gold)':'var(--border)'}`}}>
                   <MessageSquare size={13}/> Messages
-                  {unreadMsgs>0&&<span style={{background:msgTab?'rgba(255,255,255,0.25)':'rgba(220,38,38,0.1)', color:msgTab?'#fff':'#DC2626', borderRadius:'4px', padding:'0.1rem 0.5rem', fontSize:'0.72rem', fontWeight:700}}>{unreadMsgs}</span>}
+                  {unreadMsgs>0&&<span style={{background:msgTab?'rgba(255,255,255,0.25)':'rgba(232,112,125,0.12)', color:msgTab?'#fff':'#DC2626', borderRadius:'4px', padding:'0.1rem 0.5rem', fontSize:'0.72rem', fontWeight:700}}>{unreadMsgs}</span>}
                 </button>
               </div>
             </div>
@@ -846,6 +846,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                       <div style={{display:'flex', alignItems:'center', gap:'8px', flexWrap:'wrap', marginBottom:'4px'}}>
                         <p style={{fontWeight:600, fontSize:'0.95rem', color:'var(--text-primary)', fontFamily:F_BODY}}>{msg.name}</p>
                         <p style={{fontSize:'0.82rem', color:'var(--text-faint)', fontFamily:F_BODY}}>{msg.email}</p>
+                        {(msg as Record<string,unknown>).contact_number && <p style={{fontSize:'0.82rem', color:'var(--text-faint)', fontFamily:F_BODY}}>· {(msg as Record<string,unknown>).contact_number as string}</p>}
                         {!msg.read&&<span style={{background:'var(--gold-pale)', color:'var(--gold)', border:'1px solid var(--gold-border)', padding:'0.1rem 0.45rem', borderRadius:'4px', fontFamily:F_MONO, fontSize:'0.6rem', fontWeight:600, letterSpacing:'0.1em', textTransform:'uppercase'}}>New</span>}
                       </div>
                       <p style={{fontSize:'0.9rem', color:'var(--text-secondary)', fontWeight:500, marginBottom:'3px', fontFamily:F_BODY}}>{msg.subject}</p>
@@ -871,8 +872,8 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
             <div className="admin-fin-stat-grid">
               {[
                 {label:'Total Revenue', v:totalRevenue, Icon:TrendingUp,  color:'#16A34A', bg:'rgba(22,163,74,0.08)', accent:'rgba(22,163,74,0.5)'},
-                {label:'Total Expense', v:totalExpense, Icon:TrendingDown, color:'#DC2626', bg:'rgba(220,38,38,0.07)', accent:'rgba(220,38,38,0.45)'},
-                {label:'Net Income',    v:netIncome,    Icon:DollarSign,   color:netIncome>=0?'#16A34A':'#DC2626', bg:netIncome>=0?'rgba(22,163,74,0.08)':'rgba(220,38,38,0.07)', accent:netIncome>=0?'rgba(22,163,74,0.5)':'rgba(220,38,38,0.45)'},
+                {label:'Total Expense', v:totalExpense, Icon:TrendingDown, color:'#E8707D', bg:'rgba(232,112,125,0.09)', accent:'rgba(232,112,125,0.5)'},
+                {label:'Net Income',    v:netIncome,    Icon:DollarSign,   color:netIncome>=0?'#16A34A':'#DC2626', bg:netIncome>=0?'rgba(22,163,74,0.08)':'rgba(232,112,125,0.09)', accent:netIncome>=0?'rgba(22,163,74,0.5)':'rgba(232,112,125,0.5)'},
               ].map(({label,v,Icon,color,bg,accent})=>(
                 <div key={label} style={{...CARD, padding:'1.75rem', position:'relative', overflow:'hidden'}}>
                   {/* Top accent bar */}
@@ -885,7 +886,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                       <Icon size={18} style={{color}}/>
                     </div>
                   </div>
-                  <p style={{fontFamily:F_NUM, fontWeight:800, fontSize:'2.2rem', color, lineHeight:1, letterSpacing:'-0.03em'}}>{fmtPHP(v)}</p>
+                  <p className="admin-fin-num" style={{fontFamily:F_NUM, fontWeight:800, fontSize:'2.2rem', color, lineHeight:1, letterSpacing:'-0.03em'}}>{fmtPHP(v)}</p>
                   <p style={{fontFamily:F_MONO, fontSize:'0.62rem', color:'var(--text-faint)', marginTop:'0.625rem', letterSpacing:'0.1em'}}>
                     {label==='Net Income' ? (netIncome>=0?'▲ Profit':'▼ Loss') : label==='Total Revenue'?'Incoming funds':'Outgoing funds'}
                   </p>
@@ -955,7 +956,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                       {(['revenue','expense'] as const).map(t=>(
                         <button key={t} type="button"
                           onClick={()=>{setFinForm(p=>({...p,type:t,client_name:'',client_issue:''})); setClientMode('dropdown')}}
-                          style={{flex:1, padding:'0.65rem', borderRadius:'8px', fontFamily:F_MONO, fontSize:'0.72rem', fontWeight:600, letterSpacing:'0.08em', textTransform:'uppercase', cursor:'pointer', transition:'all 0.15s', background:finForm.type===t?(t==='revenue'?'rgba(22,163,74,0.15)':'rgba(220,38,38,0.12)'):'var(--bg-raised)', color:finForm.type===t?(t==='revenue'?'#16A34A':'#DC2626'):'var(--text-muted)', border:`1px solid ${finForm.type===t?(t==='revenue'?'rgba(22,163,74,0.3)':'rgba(220,38,38,0.3)'):'var(--border)'}`}}>
+                          style={{flex:1, padding:'0.65rem', borderRadius:'8px', fontFamily:F_MONO, fontSize:'0.72rem', fontWeight:600, letterSpacing:'0.08em', textTransform:'uppercase', cursor:'pointer', transition:'all 0.15s', background:finForm.type===t?(t==='revenue'?'rgba(22,163,74,0.15)':'rgba(232,112,125,0.14)'):'var(--bg-raised)', color:finForm.type===t?(t==='revenue'?'#16A34A':'#DC2626'):'var(--text-muted)', border:`1px solid ${finForm.type===t?(t==='revenue'?'rgba(22,163,74,0.3)':'rgba(232,112,125,0.35)'):'var(--border)'}`}}>
                           {t}
                         </button>
                       ))}
@@ -1118,7 +1119,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                   </div>
                 </div>
 
-                <div style={{overflowX:'auto', overflowY:'auto', flex:1}}>
+                <div className="admin-table-scroll" style={{overflowX:'auto', overflowY:'auto', flex:1}}>
                   {filteredRecords.length===0 ? (
                     <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.95rem', padding:'3.5rem', fontFamily:F_BODY}}>No records found</p>
                   ) : (
@@ -1139,7 +1140,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                               onMouseLeave={e=>(e.currentTarget as HTMLTableRowElement).style.background=''}>
                               <td style={{padding:'0.875rem 1rem', fontFamily:F_NUM, fontSize:'0.9rem', fontWeight:400, color:'var(--text-secondary)', whiteSpace:'nowrap'}}>{format(parseISO(r.record_date),'MMM d, yyyy')}</td>
                               <td style={{padding:'0.875rem 1rem'}}>
-                                <span style={{background:r.type==='revenue'?'rgba(22,163,74,0.1)':'rgba(220,38,38,0.1)', color:r.type==='revenue'?'#16A34A':'#DC2626', border:`1px solid ${r.type==='revenue'?'rgba(22,163,74,0.25)':'rgba(220,38,38,0.25)'}`, padding:'0.22rem 0.6rem', borderRadius:'4px', fontFamily:F_MONO, fontSize:'0.68rem', fontWeight:500, letterSpacing:'0.08em', textTransform:'uppercase'}}>
+                                <span style={{background:r.type==='revenue'?'rgba(22,163,74,0.1)':'rgba(232,112,125,0.12)', color:r.type==='revenue'?'#16A34A':'#DC2626', border:`1px solid ${r.type==='revenue'?'rgba(22,163,74,0.25)':'rgba(232,112,125,0.3)'}`, padding:'0.22rem 0.6rem', borderRadius:'4px', fontFamily:F_MONO, fontSize:'0.68rem', fontWeight:500, letterSpacing:'0.08em', textTransform:'uppercase'}}>
                                   {r.type}
                                 </span>
                               </td>
@@ -1148,7 +1149,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                               <td style={{padding:'0.875rem 1rem', fontSize:'0.9rem', fontWeight:400, color:'var(--text-secondary)', fontFamily:F_BODY}}>{x.client_name||'—'}</td>
                               <td style={{padding:'0.875rem 1rem', fontSize:'0.88rem', fontWeight:400, color:'var(--text-muted)', fontFamily:F_BODY, maxWidth:'140px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{x.client_issue||'—'}</td>
                               <td style={{padding:'0.875rem 1rem', fontSize:'0.88rem', fontWeight:400, color:'var(--text-muted)', fontFamily:F_BODY}}>{x.payment_method||'—'}</td>
-                              <td style={{padding:'0.875rem 1rem', fontSize:'0.88rem', fontWeight:400, color:'var(--text-muted)', fontFamily:F_BODY, maxWidth:'160px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{r.description}</td>
+                              <td style={{padding:'0.875rem 1rem', fontSize:'0.88rem', fontWeight:400, color:'var(--text-muted)', fontFamily:F_BODY, minWidth:'140px', maxWidth:'220px', whiteSpace:'normal', wordBreak:'break-word', lineHeight:1.5}}>{r.description}</td>
                             </tr>
                           )
                         })}
@@ -1166,7 +1167,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
       {selected&&(
         <div style={{position:'fixed', inset:0, zIndex:60, display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem', background:'rgba(0,0,0,0.65)', backdropFilter:'blur(6px)'}}
           onClick={e=>{if(e.target===e.currentTarget)setSelected(null)}}>
-          <div style={{...CARD, width:'100%', maxWidth:'540px', maxHeight:'90vh', overflowY:'auto', border:'1px solid var(--border-strong)'}}>
+          <div className="admin-modal-inner" style={{...CARD, width:'100%', maxWidth:'540px', maxHeight:'90vh', overflowY:'auto', border:'1px solid var(--border-strong)'}}>
             <div style={{position:'sticky', top:0, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'1.25rem 1.75rem', borderBottom:'1px solid var(--border)', background:'var(--bg-surface)', zIndex:1}}>
               <div>
                 <p style={{fontFamily:F_BODY, fontWeight:600, fontSize:'1.15rem', color:'var(--text-primary)'}}>Appointment Details</p>
@@ -1229,7 +1230,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
       {selMsg&&(
         <div style={{position:'fixed', inset:0, zIndex:60, display:'flex', alignItems:'center', justifyContent:'center', padding:'1rem', background:'rgba(0,0,0,0.65)', backdropFilter:'blur(6px)'}}
           onClick={e=>{if(e.target===e.currentTarget)setSelMsg(null)}}>
-          <div style={{...CARD, width:'100%', maxWidth:'500px', border:'1px solid var(--border-strong)'}}>
+          <div className="admin-modal-inner" style={{...CARD, width:'100%', maxWidth:'500px', border:'1px solid var(--border-strong)'}}>
             <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'1.25rem 1.75rem', borderBottom:'1px solid var(--border)'}}>
               <p style={{fontFamily:F_BODY, fontWeight:600, fontSize:'1.15rem', color:'var(--text-primary)'}}>Message</p>
               <button onClick={()=>setSelMsg(null)} style={{color:'var(--text-muted)', cursor:'pointer', background:'none', border:'none'}}><X size={18}/></button>
@@ -1238,6 +1239,14 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
               <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'1rem'}}>
                 <div><p style={LBL}>From</p><p style={{fontSize:'0.95rem', color:'var(--text-primary)', fontWeight:600, fontFamily:F_BODY}}>{selMsg.name}</p></div>
                 <div><p style={LBL}>Email</p><a href={`mailto:${selMsg.email}`} style={{fontSize:'0.95rem', color:'var(--gold)', fontWeight:500, fontFamily:F_BODY}}>{selMsg.email}</a></div>
+                {(selMsg as Record<string,unknown>).contact_number && (
+                  <div style={{gridColumn:'1/-1'}}>
+                    <p style={LBL}>Contact Number</p>
+                    <a href={`tel:${((selMsg as Record<string,unknown>).contact_number as string).replace(/\s/g,'')}`} style={{fontSize:'0.95rem', color:'var(--gold)', fontWeight:500, fontFamily:F_BODY}}>
+                      {(selMsg as Record<string,unknown>).contact_number as string}
+                    </a>
+                  </div>
+                )}
                 <div style={{gridColumn:'1/-1'}}><p style={LBL}>Subject</p><p style={{fontSize:'0.95rem', color:'var(--text-primary)', fontWeight:600, fontFamily:F_BODY}}>{selMsg.subject}</p></div>
                 <div style={{gridColumn:'1/-1'}}>
                   <p style={LBL}>Message</p>
