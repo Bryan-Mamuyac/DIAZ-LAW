@@ -576,9 +576,9 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
   }
 
   const exportApptCSV = () => {
-   const h = ['ID','First','Last','Email','Contact','Address','Issue','Status','Appt Date','Appt Time','Submitted']
-  const r = filtered.map((a: Appointment) => [a.id, a.first_name, a.last_name, (a as Record<string,unknown>).email||'', (a as Record<string,unknown>).contact_number||'', `"${a.address}"`, `"${a.issue_type}"`, a.status, a.appointment_date||'', (a as Record<string,unknown>).appointment_time||'', format(new Date(a.created_at!), 'MMM d yyyy HH:mm')])
-  dl([h,...r],'appointments.csv') 
+    const h = ['ID','First','Last','Email','Contact','Address','Issue','Status','Appt Date','Appt Time','Submitted']
+    const r = filtered.map((a:Appointment)=>[a.id,a.first_name,a.last_name,(a as Record<string,unknown>).email||'',(a as Record<string,unknown>).contact_number||'',`"${a.address}"`,`"${a.issue_type}"`,a.status,a.appointment_date||'',(a as Record<string,unknown>).appointment_time||'',format(new Date(a.created_at!),'MMM d yyyy HH:mm')])
+    dl([h,...r],'appointments.csv')
   }
   const exportFinCSV = () => {
     const year = finMonthFilter !== 'all' ? finMonthFilter.slice(0,4) : new Date().getFullYear().toString()
