@@ -888,44 +888,50 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
 
               return (
                 <div style={{...CARD, marginTop:'1.5rem', overflow:'hidden'}}>
-                  {/* Calendar header */}
-                  <div style={{padding:'1.25rem 1.5rem', borderBottom:'1px solid var(--border)', background:'var(--bg-raised)', display:'flex', alignItems:'center', justifyContent:'space-between'}}>
-                    <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                      <div style={{width:'32px', height:'32px', borderRadius:'8px', background:'var(--gold-pale)', border:'1px solid var(--gold-border)', display:'flex', alignItems:'center', justifyContent:'center'}}>
+                  {/* Calendar header — top row: title + month nav */}
+                  <div style={{padding:'1.25rem 1.25rem 0', background:'var(--bg-raised)'}}>
+                  <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', gap:'0.75rem', flexWrap:'wrap', marginBottom:'0.75rem'}}>
+                    <div style={{display:'flex', alignItems:'center', gap:'10px', minWidth:0}}>
+                      <div style={{width:'32px', height:'32px', borderRadius:'8px', background:'var(--gold-pale)', border:'1px solid var(--gold-border)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
                         <Calendar size={14} style={{color:'var(--gold)'}}/>
                       </div>
-                      <div>
+                      <div style={{minWidth:0}}>
                         <p style={{fontFamily:F_MONO, fontSize:'0.8rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700}}>Appointment Calendar</p>
-                        <p style={{fontFamily:F_BODY, fontSize:'0.75rem', color:'var(--text-faint)', marginTop:'1px'}}>Click any day to see scheduled appointments</p>
+                        <p style={{fontFamily:F_BODY, fontSize:'0.72rem', color:'var(--text-faint)', marginTop:'1px'}}>Click any day to see scheduled appointments</p>
                       </div>
                     </div>
-                    <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
-                      {/* Legend */}
-                      <div style={{display:'flex', gap:'10px', marginRight:'12px', flexWrap:'wrap', justifyContent:'flex-end'}}>
-                        {(['pending','confirmed','completed','cancelled'] as AppStatus[]).map(s=>(
-                          <div key={s} style={{display:'flex', alignItems:'center', gap:'4px'}}>
-                            <div style={{width:'8px', height:'8px', borderRadius:'50%', background:STATUS_DOT[s], flexShrink:0}}/>
-                            <span style={{fontFamily:F_MONO, fontSize:'0.6rem', letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--text-faint)'}}>{s}</span>
-                          </div>
-                        ))}
-                      </div>
-                      {/* Month nav */}
-                      <button onClick={prevMonth} style={{width:'32px', height:'32px', borderRadius:'8px', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', background:'var(--bg-inset)', border:'1px solid var(--border)', color:'var(--text-muted)'}}>
-                        <ChevronDown size={14} style={{transform:'rotate(90deg)'}}/>
+                    {/* Month nav */}
+                    <div style={{display:'flex', alignItems:'center', gap:'6px', flexShrink:0}}>
+                      <button onClick={prevMonth} style={{width:'30px', height:'30px', borderRadius:'7px', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', background:'var(--bg-inset)', border:'1px solid var(--border)', color:'var(--text-muted)', flexShrink:0}}>
+                        <ChevronDown size={13} style={{transform:'rotate(90deg)'}}/>
                       </button>
-                      <span style={{fontFamily:F_BODY, fontWeight:600, fontSize:'0.95rem', color:'var(--text-primary)', minWidth:'140px', textAlign:'center'}}>
+                      <span style={{fontFamily:F_BODY, fontWeight:600, fontSize:'0.9rem', color:'var(--text-primary)', whiteSpace:'nowrap', minWidth:'110px', textAlign:'center'}}>
                         {CAL_MONTHS[calView.month]} {calView.year}
                       </span>
-                      <button onClick={nextMonth} style={{width:'32px', height:'32px', borderRadius:'8px', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', background:'var(--bg-inset)', border:'1px solid var(--border)', color:'var(--text-muted)'}}>
-                        <ChevronDown size={14} style={{transform:'rotate(-90deg)'}}/>
+                      <button onClick={nextMonth} style={{width:'30px', height:'30px', borderRadius:'7px', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', background:'var(--bg-inset)', border:'1px solid var(--border)', color:'var(--text-muted)', flexShrink:0}}>
+                        <ChevronDown size={13} style={{transform:'rotate(-90deg)'}}/>
                       </button>
                       <button onClick={()=>setCalView({month:new Date().getMonth(),year:new Date().getFullYear()})}
-                        style={{padding:'0.35rem 0.75rem', borderRadius:'8px', fontFamily:F_MONO, fontSize:'0.65rem', letterSpacing:'0.08em', textTransform:'uppercase', fontWeight:600, cursor:'pointer', background:'var(--gold-pale)', color:'var(--gold)', border:'1px solid var(--gold-border)'}}>
+                        style={{padding:'0.3rem 0.65rem', borderRadius:'7px', fontFamily:F_MONO, fontSize:'0.62rem', letterSpacing:'0.08em', textTransform:'uppercase', fontWeight:600, cursor:'pointer', background:'var(--gold-pale)', color:'var(--gold)', border:'1px solid var(--gold-border)', flexShrink:0}}>
                         Today
                       </button>
                     </div>
                   </div>
 
+                  {/* Legend row */}
+                  <div style={{display:'flex', gap:'10px', flexWrap:'wrap', paddingBottom:'1rem', borderTop:'1px solid var(--border)', paddingTop:'0.75rem'}}>
+                    {(['pending','confirmed','completed','cancelled'] as AppStatus[]).map(s=>(
+                      <div key={s} style={{display:'flex', alignItems:'center', gap:'4px'}}>
+                        <div style={{width:'8px', height:'8px', borderRadius:'50%', background:STATUS_DOT[s], flexShrink:0}}/>
+                        <span style={{fontFamily:F_MONO, fontSize:'0.6rem', letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--text-faint)'}}>{s}</span>
+                      </div>
+                    ))}
+                  </div>
+                  </div>{/* end header padding wrapper */}
+
+                {/* Scrollable calendar grid */}
+                <div style={{overflowX:'auto', WebkitOverflowScrolling:'touch' as React.CSSProperties['WebkitOverflowScrolling']}}>
+                  <div style={{minWidth:'420px'}}>
                   {/* Day headers */}
                   <div style={{display:'grid', gridTemplateColumns:'repeat(7,1fr)', borderBottom:'1px solid var(--border)'}}>
                     {CAL_DAYS.map(d=>(
@@ -1002,6 +1008,8 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                       )
                     })}
                   </div>
+                  </div>{/* end minWidth wrapper */}
+                </div>{/* end scroll wrapper */}
                 </div>
               )
             })()}
