@@ -622,7 +622,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
       record_date:      finForm.record_date,
       type:             finForm.type,
       category:         '',
-      amount:           Math.round(parseFloat(finForm.amount) * 100) / 100,
+      amount:           parseFloat(parseFloat(finForm.amount).toFixed(2)),
       description:      finForm.description || '',
       invoice_number:   finForm.invoice_number||null,
       client_name:      finForm.type==='revenue'?(finForm.client_name||null):null,
@@ -1353,7 +1353,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                             )}
                             <button type="button"
                               onClick={() => { setIssueManual(v => !v); setFinForm(p=>({...p, client_issue:''})) }}
-                              style={{marginTop:'5px', background:'none', border:'none', cursor:'pointer', fontFamily:F_MONO, fontSize:'0.62rem', letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--gold)', textDecoration:'underline', padding:0}}>
+                              style={{marginTop:'7px', background:'none', border:'none', cursor:'pointer', fontFamily:F_BODY, fontSize:'0.82rem', fontWeight:600, color:'var(--gold)', textDecoration:'underline', padding:0, display:'flex', alignItems:'center', gap:'4px'}}>
                               {issueManual ? '← Back to dropdown' : '✎ Type manually instead'}
                             </button>
                           </div>
@@ -1388,14 +1388,6 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                       </select>
                       <ChevronDown size={13} style={{position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color:'var(--text-faint)'}}/>
                     </div>
-                  </div>
-
-                  {/* Description */}
-                  <div>
-                    <label style={LBL}>Description</label>
-                    <input type="text" placeholder="Brief description…"
-                      value={finForm.description} onChange={e=>setFinForm(p=>({...p,description:e.target.value}))}
-                      className="input-luxury" style={{fontSize:'0.95rem'}}/>
                   </div>
 
                   <button onClick={()=>{
@@ -1807,7 +1799,6 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                     ['Issue',finForm.client_issue||'—'],
                   ]:[]),
                   ['Payment',    finForm.payment_method],
-                  ...(finForm.description?[['Description',finForm.description]]:[]),
                 ].map(([l,v])=>(
                   <div key={l} style={{display:'flex', justifyContent:'space-between', gap:'1rem', alignItems:'flex-start'}}>
                     <span style={{fontFamily:F_MONO, fontSize:'0.67rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--text-muted)', flexShrink:0}}>{l}</span>
