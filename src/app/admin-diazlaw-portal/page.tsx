@@ -1390,6 +1390,16 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                     </div>
                   </div>
 
+                  {/* Description — Expense only */}
+                  {finForm.type==='expense'&&(
+                    <div>
+                      <label style={LBL}>Description</label>
+                      <input type="text" placeholder="Brief description…"
+                        value={finForm.description} onChange={e=>setFinForm(p=>({...p,description:e.target.value}))}
+                        className="input-luxury" style={{fontSize:'0.95rem'}}/>
+                    </div>
+                  )}
+
                   <button onClick={()=>{
                     if (!finForm.record_date||!finForm.amount) { toast.error('Please fill in date and amount.'); return }
                     setShowConfirm(true)
@@ -1799,6 +1809,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                     ['Issue',finForm.client_issue||'—'],
                   ]:[]),
                   ['Payment',    finForm.payment_method],
+                  ...(finForm.type==='expense'&&finForm.description?[['Description',finForm.description]]:[]),
                 ].map(([l,v])=>(
                   <div key={l} style={{display:'flex', justifyContent:'space-between', gap:'1rem', alignItems:'flex-start'}}>
                     <span style={{fontFamily:F_MONO, fontSize:'0.67rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--text-muted)', flexShrink:0}}>{l}</span>
