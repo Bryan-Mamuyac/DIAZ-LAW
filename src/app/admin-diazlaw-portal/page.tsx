@@ -458,6 +458,11 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
   const [finTypeFilter,  setFinTypeFilter]  = useState<'revenue'|'expense'>('revenue')
   const [finMonthFilter, setFinMonthFilter] = useState<string>('all')
 
+  // Pagination
+  const ROWS_PER_PAGE = 10
+  const [revPage, setRevPage] = useState(1)
+  const [expPage, setExpPage] = useState(1)
+
   // Financial form
   const [finForm, setFinForm] = useState({
     record_date: todayISO(), type: 'revenue' as 'revenue'|'expense',
@@ -1249,26 +1254,39 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                     </div>
                   </div>
 
-                  {/* Client Name — Revenue only */}
+                  {/* Appointment Type — Revenue only: controls both mode AND client input */}
                   {finForm.type==='revenue'&&(
                     <>
                       <div>
-                        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'0.5rem'}}>
-                          <label style={{...LBL, marginBottom:0}}>Client Name</label>
-                          <div style={{display:'flex', borderRadius:'6px', overflow:'hidden', border:'1px solid var(--border)'}}>
-                            {(['dropdown','manual'] as const).map(mode=>(
-                              <button key={mode} type="button"
-                                onClick={()=>{ setClientMode(mode); setFinForm(p=>({...p,client_name:'',client_issue:''})) }}
-                                style={{padding:'0.25rem 0.65rem', fontFamily:F_MONO, fontSize:'0.6rem', letterSpacing:'0.08em', textTransform:'uppercase', cursor:'pointer', border:'none', transition:'all 0.15s',
-                                  background: clientMode===mode ? 'var(--gold)' : 'var(--bg-raised)',
-                                  color:       clientMode===mode ? '#fff'        : 'var(--text-faint)',
-                                }}>
-                                {mode==='dropdown' ? 'From Appt' : 'Walk-in'}
-                              </button>
-                            ))}
-                          </div>
+                        <label style={LBL}>Appointment Type</label>
+                        <div style={{display:'flex', gap:'8px'}}>
+                          {(['Online','Walk-in'] as const).map(t=>(
+                            <button key={t} type="button"
+                              onClick={()=>{
+                                setFinForm(p=>({...p, appointment_type:t, client_name:'', client_issue:''}))
+                                setClientMode(t==='Online' ? 'dropdown' : 'manual')
+                              }}
+                              style={{flex:1, padding:'0.65rem', borderRadius:'8px', fontFamily:F_MONO, fontSize:'0.72rem', fontWeight:600, letterSpacing:'0.08em', textTransform:'uppercase', cursor:'pointer', transition:'all 0.15s',
+                                background: finForm.appointment_type===t
+                                  ? (t==='Online' ? 'rgba(59,130,246,0.15)' : 'rgba(201,168,76,0.15)')
+                                  : 'var(--bg-raised)',
+                                color: finForm.appointment_type===t
+                                  ? (t==='Online' ? '#1D4ED8' : '#B8922A')
+                                  : 'var(--text-muted)',
+                                border: `1px solid ${finForm.appointment_type===t
+                                  ? (t==='Online' ? 'rgba(59,130,246,0.3)' : 'rgba(201,168,76,0.3)')
+                                  : 'var(--border)'}`,
+                              }}>
+                              {t==='Online' ? '🌐 Online' : '🚶 Walk-in'}
+                            </button>
+                          ))}
                         </div>
-                        {clientMode==='dropdown' ? (
+                      </div>
+
+                      {/* Client Name — changes based on appointment type */}
+                      <div>
+                        <label style={LBL}>Client Name</label>
+                        {finForm.appointment_type==='Online' ? (
                           <div style={{position:'relative'}}>
                             <select value={finForm.client_name}
                               onChange={e=>{
@@ -1289,15 +1307,16 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                             <ChevronDown size={13} style={{position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color:'var(--text-faint)'}}/>
                           </div>
                         ) : (
-                          <input type="text" placeholder="Enter client full name (walk-in)…"
+                          <input type="text" placeholder="Enter client full name…"
                             value={finForm.client_name}
                             onChange={e=>setFinForm(p=>({...p, client_name:e.target.value}))}
                             className="input-luxury" style={{fontSize:'0.95rem'}}/>
                         )}
                       </div>
+
                       <div>
                         <label style={LBL}>Appointment / Issue Type</label>
-                        {clientMode==='dropdown' ? (
+                        {finForm.appointment_type==='Online' ? (
                           <input type="text" value={finForm.client_issue} readOnly placeholder="Auto-filled from appointment…"
                             className="input-luxury" style={{fontSize:'0.95rem', opacity: finForm.client_issue?1:0.6, cursor:'default'}}/>
                         ) : (
@@ -1308,32 +1327,6 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                         )}
                       </div>
                     </>
-                  )}
-
-                  {/* Appointment Type — Revenue only */}
-                  {finForm.type==='revenue'&&(
-                    <div>
-                      <label style={LBL}>Appointment Type</label>
-                      <div style={{display:'flex', gap:'8px'}}>
-                        {(['Online','Walk-in'] as const).map(t=>(
-                          <button key={t} type="button"
-                            onClick={()=>setFinForm(p=>({...p,appointment_type:t}))}
-                            style={{flex:1, padding:'0.65rem', borderRadius:'8px', fontFamily:F_MONO, fontSize:'0.72rem', fontWeight:600, letterSpacing:'0.08em', textTransform:'uppercase', cursor:'pointer', transition:'all 0.15s',
-                              background: finForm.appointment_type===t
-                                ? (t==='Online' ? 'rgba(59,130,246,0.15)' : 'rgba(201,168,76,0.15)')
-                                : 'var(--bg-raised)',
-                              color: finForm.appointment_type===t
-                                ? (t==='Online' ? '#1D4ED8' : '#B8922A')
-                                : 'var(--text-muted)',
-                              border: `1px solid ${finForm.appointment_type===t
-                                ? (t==='Online' ? 'rgba(59,130,246,0.3)' : 'rgba(201,168,76,0.3)')
-                                : 'var(--border)'}`,
-                            }}>
-                            {t==='Online' ? '🌐 Online' : '🚶 Walk-in'}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
                   )}
 
                   {/* Amount */}
@@ -1400,7 +1393,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                   <div style={{display:'flex', gap:'8px', flexWrap:'wrap'}}>
                     <div style={{position:'relative'}}>
                       <Filter size={12} style={{position:'absolute', left:'9px', top:'50%', transform:'translateY(-50%)', color:'var(--text-faint)'}}/>
-                      <select value={finTypeFilter} onChange={e=>setFinTypeFilter(e.target.value as 'revenue'|'expense')}
+                      <select value={finTypeFilter} onChange={e=>{setFinTypeFilter(e.target.value as 'revenue'|'expense'); setRevPage(1); setExpPage(1)}}
                         className="input-luxury" style={{paddingLeft:'28px', paddingTop:'0.45rem', paddingBottom:'0.45rem', fontSize:'0.85rem', paddingRight:'2rem', appearance:'none', cursor:'pointer', minWidth:'145px'}}>
                         <option value="revenue">Revenue</option>
                         <option value="expense">Expense</option>
@@ -1412,6 +1405,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                       <select value={finMonthFilter} onChange={e => {
                         const v = e.target.value
                         setFinMonthFilter(v)
+                        setRevPage(1); setExpPage(1)
                         // Sync chart filter
                         if (v === 'all') {
                           setChartRange('overall')
@@ -1438,12 +1432,15 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                   ) : (()=>{
                     const revenues = filteredRecords.filter(r=>r.type==='revenue')
                     const expenses = filteredRecords.filter(r=>r.type==='expense')
-                    const totalRev = revenues.reduce((s,r)=>s+r.amount,0)
-                    const totalExp = expenses.reduce((s,r)=>s+r.amount,0)
 
                     // Revenue columns: Date, Amount, Appt Type, Invoice, Client, Issue, Payment
-                    // Expense columns: Date, Amount, Payment
-                    const RevTable = ({rows}: {rows: FinancialRecord[]}) => (
+                    // Expense columns: Date, Amount, Invoice, Payment, Description
+                    const RevTable = ({rows}: {rows: FinancialRecord[]}) => {
+                      const pages = Math.ceil(rows.length/ROWS_PER_PAGE)
+                      const safePg = Math.min(revPage, Math.max(1, pages))
+                      const pageRows = rows.slice((safePg-1)*ROWS_PER_PAGE, safePg*ROWS_PER_PAGE)
+                      const totalRevAmt = rows.reduce((s,r)=>s+r.amount,0)
+                      return (
                       <div style={{overflowX:'auto'}}>
                         <table style={{width:'100%', minWidth:'700px', borderCollapse:'collapse'}}>
                           <thead style={{position:'sticky', top:0, zIndex:1}}>
@@ -1454,7 +1451,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                             </tr>
                           </thead>
                           <tbody>
-                            {rows.map(r=>{
+                            {pageRows.map(r=>{
                               const x=r as FinancialRecord&{invoice_number?:string;client_name?:string;client_issue?:string;payment_method?:string;appointment_type?:string}
                               const apptType = x.appointment_type || (x.client_name ? 'Walk-in' : '—')
                               return (
@@ -1483,34 +1480,52 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                           <tfoot>
                             <tr style={{background:'rgba(22,163,74,0.06)', borderTop:'2px solid rgba(22,163,74,0.2)'}}>
                               <td style={{padding:'0.75rem 1rem', fontFamily:F_MONO, fontSize:'0.72rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'#15803D', fontWeight:700}}>Total</td>
-                              <td style={{padding:'0.75rem 1rem', fontFamily:F_NUM, fontSize:'0.95rem', fontWeight:800, color:'#16A34A'}}>{fmtPHP(totalRev)}</td>
+                              <td style={{padding:'0.75rem 1rem', fontFamily:F_NUM, fontSize:'0.95rem', fontWeight:800, color:'#16A34A'}}>{fmtPHP(totalRevAmt)}</td>
                               <td colSpan={5}/>
                             </tr>
                           </tfoot>
                         </table>
+                        {pages>1&&(
+                          <div style={{display:'flex',alignItems:'center',gap:'4px',padding:'0.75rem 1rem',borderTop:'1px solid var(--border)',flexWrap:'wrap'}}>
+                            <button onClick={()=>setRevPage(p=>Math.max(1,p-1))} disabled={safePg===1} style={{padding:'0.3rem 0.6rem',borderRadius:'6px',fontFamily:F_MONO,fontSize:'0.72rem',fontWeight:700,cursor:safePg===1?'not-allowed':'pointer',border:`1px solid ${safePg===1?'var(--border)':'#16A34A'}`,background:'transparent',color:safePg===1?'var(--text-faint)':'#16A34A',opacity:safePg===1?0.4:1}}>«</button>
+                            {Array.from({length:pages},(_,i)=>i+1).map(p=>(
+                              <button key={p} onClick={()=>setRevPage(p)} style={{width:'32px',height:'32px',borderRadius:'6px',fontFamily:F_MONO,fontSize:'0.75rem',fontWeight:700,cursor:'pointer',border:`1px solid ${safePg===p?'#16A34A':'var(--border)'}`,background:safePg===p?'#16A34A':'transparent',color:safePg===p?'#fff':'var(--text-muted)',transition:'all 0.15s'}}>{p}</button>
+                            ))}
+                            <button onClick={()=>setRevPage(p=>Math.min(pages,p+1))} disabled={safePg===pages} style={{padding:'0.3rem 0.65rem',borderRadius:'6px',fontFamily:F_MONO,fontSize:'0.72rem',fontWeight:700,cursor:safePg===pages?'not-allowed':'pointer',border:`1px solid ${safePg===pages?'var(--border)':'#16A34A'}`,background:'transparent',color:safePg===pages?'var(--text-faint)':'#16A34A',opacity:safePg===pages?0.4:1,letterSpacing:'0.04em'}}>NEXT »</button>
+                            <span style={{fontFamily:F_MONO,fontSize:'0.62rem',color:'var(--text-faint)',marginLeft:'6px',letterSpacing:'0.08em'}}>{((safePg-1)*ROWS_PER_PAGE)+1}–{Math.min(safePg*ROWS_PER_PAGE,rows.length)} of {rows.length}</span>
+                          </div>
+                        )}
                       </div>
-                    )
+                      )
+                    }
 
-                    const ExpTable = ({rows}: {rows: FinancialRecord[]}) => (
+                    const ExpTable = ({rows}: {rows: FinancialRecord[]}) => {
+                      const pages = Math.ceil(rows.length/ROWS_PER_PAGE)
+                      const safePg = Math.min(expPage, Math.max(1, pages))
+                      const pageRows = rows.slice((safePg-1)*ROWS_PER_PAGE, safePg*ROWS_PER_PAGE)
+                      const totalExp = rows.reduce((s,r)=>s+r.amount,0)
+                      return (
                       <div style={{overflowX:'auto'}}>
-                        <table style={{width:'100%', minWidth:'400px', borderCollapse:'collapse'}}>
+                        <table style={{width:'100%', minWidth:'560px', borderCollapse:'collapse'}}>
                           <thead style={{position:'sticky', top:0, zIndex:1}}>
                             <tr style={{background:'rgba(232,112,125,0.08)', borderBottom:'2px solid rgba(232,112,125,0.2)'}}>
-                              {['Date','Amount','Payment'].map(h=>(
+                              {['Date','Amount','Invoice','Payment','Description'].map(h=>(
                                 <th key={h} style={{textAlign:'left', padding:'0.7rem 1rem', fontFamily:F_MONO, fontSize:'0.68rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'#B91C1C', fontWeight:700, whiteSpace:'nowrap'}}>{h}</th>
                               ))}
                             </tr>
                           </thead>
                           <tbody>
-                            {rows.map(r=>{
-                              const x=r as FinancialRecord&{payment_method?:string}
+                            {pageRows.map(r=>{
+                              const x=r as FinancialRecord&{payment_method?:string;invoice_number?:string}
                               return (
                                 <tr key={r.id} style={{borderBottom:'1px solid var(--border)'}}
                                   onMouseEnter={e=>(e.currentTarget as HTMLTableRowElement).style.background='rgba(232,112,125,0.04)'}
                                   onMouseLeave={e=>(e.currentTarget as HTMLTableRowElement).style.background=''}>
                                   <td style={{padding:'0.8rem 1rem', fontFamily:F_NUM, fontSize:'0.88rem', color:'var(--text-secondary)', whiteSpace:'nowrap'}}>{format(parseISO(r.record_date),'MMM d, yyyy')}</td>
                                   <td style={{padding:'0.8rem 1rem', fontFamily:F_NUM, fontSize:'0.9rem', fontWeight:600, color:'#DC2626', whiteSpace:'nowrap'}}>{fmtPHP(r.amount)}</td>
+                                  <td style={{padding:'0.8rem 1rem', fontFamily:F_MONO, fontSize:'0.8rem', color:'var(--text-muted)'}}>{x.invoice_number||'—'}</td>
                                   <td style={{padding:'0.8rem 1rem', fontFamily:F_BODY, fontSize:'0.85rem', color:'var(--text-muted)'}}>{x.payment_method||'—'}</td>
+                                  <td style={{padding:'0.8rem 1rem', fontFamily:F_BODY, fontSize:'0.85rem', color:'var(--text-muted)', minWidth:'130px', maxWidth:'220px', whiteSpace:'normal', wordBreak:'break-word', lineHeight:1.5}}>{r.description||'—'}</td>
                                 </tr>
                               )
                             })}
@@ -1519,12 +1534,24 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                             <tr style={{background:'rgba(232,112,125,0.06)', borderTop:'2px solid rgba(232,112,125,0.2)'}}>
                               <td style={{padding:'0.75rem 1rem', fontFamily:F_MONO, fontSize:'0.72rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'#B91C1C', fontWeight:700}}>Total</td>
                               <td style={{padding:'0.75rem 1rem', fontFamily:F_NUM, fontSize:'0.95rem', fontWeight:800, color:'#DC2626'}}>{fmtPHP(totalExp)}</td>
-                              <td/>
+                              <td colSpan={3}/>
                             </tr>
                           </tfoot>
                         </table>
+                        {/* Expense Pagination */}
+                        {pages>1&&(
+                          <div style={{display:'flex',alignItems:'center',gap:'4px',padding:'0.75rem 1rem',borderTop:'1px solid var(--border)',flexWrap:'wrap'}}>
+                            <button onClick={()=>setExpPage(p=>Math.max(1,p-1))} disabled={safePg===1} style={{padding:'0.3rem 0.6rem',borderRadius:'6px',fontFamily:F_MONO,fontSize:'0.72rem',fontWeight:700,cursor:safePg===1?'not-allowed':'pointer',border:`1px solid ${safePg===1?'var(--border)':'#DC2626'}`,background:'transparent',color:safePg===1?'var(--text-faint)':'#DC2626',opacity:safePg===1?0.4:1}}>«</button>
+                            {Array.from({length:pages},(_,i)=>i+1).map(p=>(
+                              <button key={p} onClick={()=>setExpPage(p)} style={{width:'32px',height:'32px',borderRadius:'6px',fontFamily:F_MONO,fontSize:'0.75rem',fontWeight:700,cursor:'pointer',border:`1px solid ${safePg===p?'#DC2626':'var(--border)'}`,background:safePg===p?'#DC2626':'transparent',color:safePg===p?'#fff':'var(--text-muted)',transition:'all 0.15s'}}>{p}</button>
+                            ))}
+                            <button onClick={()=>setExpPage(p=>Math.min(pages,p+1))} disabled={safePg===pages} style={{padding:'0.3rem 0.65rem',borderRadius:'6px',fontFamily:F_MONO,fontSize:'0.72rem',fontWeight:700,cursor:safePg===pages?'not-allowed':'pointer',border:`1px solid ${safePg===pages?'var(--border)':'#DC2626'}`,background:'transparent',color:safePg===pages?'var(--text-faint)':'#DC2626',opacity:safePg===pages?0.4:1,letterSpacing:'0.04em'}}>NEXT »</button>
+                            <span style={{fontFamily:F_MONO,fontSize:'0.62rem',color:'var(--text-faint)',marginLeft:'6px',letterSpacing:'0.08em'}}>{((safePg-1)*ROWS_PER_PAGE)+1}–{Math.min(safePg*ROWS_PER_PAGE,rows.length)} of {rows.length}</span>
+                          </div>
+                        )}
                       </div>
-                    )
+                      )
+                    }
 
                     return (
                       <>
