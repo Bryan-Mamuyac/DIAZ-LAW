@@ -658,7 +658,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
     const filename = finTypeFilter === 'revenue' ? `revenue_${suffix}.xlsx` : `expense_${suffix}.xlsx`
 
     const REV_HEADERS = ['Date','Type','Amount','Invoice','Appt Type','Client','Issue','Payment','Description']
-    const EXP_HEADERS = ['Date','Type','Amount','Payment','Description']
+    const EXP_HEADERS = ['Date','Type','Amount','Invoice','Payment','Description']
 
     const toRevRow = (rec: FinancialRecord) => {
       const x = rec as Record<string,unknown>
@@ -680,6 +680,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
         Date:        rec.record_date,
         Type:        rec.type,
         Amount:      rec.amount,
+        Invoice:     (x.invoice_number as string)||'',
         Payment:     (x.payment_method as string)||'',
         Description: rec.description,
       }
@@ -705,10 +706,10 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
       const expRows = expenses.map(toExpRow)
       const expSheet = XLSX.utils.json_to_sheet(expRows, {header: EXP_HEADERS})
       XLSX.utils.sheet_add_aoa(expSheet, [
-        ['','','','',''],
-        ['TOTAL EXPENSE','', totalExp,'',''],
+        ['','','','','',''],
+        ['TOTAL EXPENSE','', totalExp,'','',''],
       ], {origin: expRows.length + 1})
-      expSheet['!cols'] = [{wch:14},{wch:10},{wch:14},{wch:12},{wch:24}]
+      expSheet['!cols'] = [{wch:14},{wch:10},{wch:14},{wch:16},{wch:12},{wch:24}]
       XLSX.utils.book_append_sheet(wb, expSheet, 'Expense')
     }
 
