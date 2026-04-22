@@ -809,16 +809,20 @@ body::after {
   }
   .hero-photo-col { order: -1; }
   .hero-photo-frame {
-    max-width: 200px;
+    max-width: 85vw;
     margin: 0 auto;
-    border-radius: 16px;
+    border-radius: 20px;
   }
-  .hero-photo-img { height: 260px; }
+  .hero-photo-img { height: 420px; }
 }
 @media (max-width: 480px) {
-  .hero-photo-frame { max-width: 160px; }
-  .hero-photo-img { height: 210px; }
-  .hero-photo-badge-name { font-size: 1.1rem; }
+  .hero-photo-frame {
+    max-width: 92vw;
+    border-radius: 18px;
+  }
+  .hero-photo-img { height: 380px; }
+  .hero-photo-badge-name { font-size: 1.25rem; }
+  .hero-photo-badge-title { font-size: 0.68rem; }
 }
 
 .hero-section {
