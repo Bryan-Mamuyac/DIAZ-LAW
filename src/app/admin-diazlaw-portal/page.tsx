@@ -445,7 +445,8 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
   const isDark = theme === 'dark'
   const mounted = true
 
-  const [visibleAppts,  setVisibleAppts]  = useState(5)
+  const [apptPage,      setApptPage]      = useState(1)
+  const APPTS_PER_PAGE = 10
   const [calView,       setCalView]       = useState({ month: new Date().getMonth(), year: new Date().getFullYear() })
   const [calModal,      setCalModal]      = useState<{ date: string; appts: Appointment[] } | null>(null)
 
@@ -458,6 +459,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
   // Financial filters
   const [finTypeFilter,  setFinTypeFilter]  = useState<'revenue'|'expense'>('revenue')
   const [finMonthFilter, setFinMonthFilter] = useState<string>('all')
+  const [transSearch,    setTransSearch]    = useState('')
 
   // Pagination
   const ROWS_PER_PAGE = 10
@@ -520,11 +522,12 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
 
   const filteredRecords = useMemo(() => {
     return records.filter(r => {
-      const typeOk  = r.type===finTypeFilter
-      const monthOk = finMonthFilter==='all' || r.record_date.slice(0,7)===finMonthFilter
-      return typeOk && monthOk
+      const typeOk   = r.type===finTypeFilter
+      const monthOk  = finMonthFilter==='all' || r.record_date.slice(0,7)===finMonthFilter
+      const searchOk = !transSearch || ((r as Record<string,unknown>).invoice_number as string||'').toLowerCase().includes(transSearch.toLowerCase())
+      return typeOk && monthOk && searchOk
     })
-  }, [records, finTypeFilter, finMonthFilter])
+  }, [records, finTypeFilter, finMonthFilter, transSearch])
 
   const monthOptions = useMemo(() => {
     const seen = new Set<string>()
@@ -845,10 +848,10 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                 <div style={{display:'flex', gap:'10px', marginBottom:'1rem', flexWrap:'wrap'}}>
                   <div style={{position:'relative', flex:1, minWidth:'200px'}}>
                     <Search size={14} style={{position:'absolute', left:'12px', top:'50%', transform:'translateY(-50%)', color:'var(--text-faint)'}}/>
-                    <input type="text" placeholder="Search by name or issue…" value={search} onChange={e=>setSearch(e.target.value)} className="input-luxury" style={{paddingLeft:'2.5rem', fontSize:'0.95rem', width:'100%'}}/>
+                    <input type="text" placeholder="Search by name or issue…" value={search} onChange={e=>{setSearch(e.target.value); setApptPage(1)}} className="input-luxury" style={{paddingLeft:'2.5rem', fontSize:'0.95rem', width:'100%'}}/>
                   </div>
                   <div style={{position:'relative'}}>
-                    <select value={sFilter} onChange={e=>setSFilter(e.target.value as 'all'|AppStatus)} className="input-luxury" style={{paddingRight:'2.25rem', minWidth:'160px', appearance:'none', cursor:'pointer', fontSize:'0.95rem'}}>
+                    <select value={sFilter} onChange={e=>{setSFilter(e.target.value as 'all'|AppStatus); setApptPage(1)}} className="input-luxury" style={{paddingRight:'2.25rem', minWidth:'160px', appearance:'none', cursor:'pointer', fontSize:'0.95rem'}}>
                       <option value="all">All Status</option>
                       {(['pending','confirmed','completed','cancelled'] as AppStatus[]).map(s=><option key={s} value={s}>{SL[s]}</option>)}
                     </select>
@@ -878,13 +881,14 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                           </tr>
                         </thead>
                         <tbody>
-                          {filtered.slice(0, visibleAppts).map((appt,i)=>{
+                          {filtered.slice((apptPage-1)*APPTS_PER_PAGE, apptPage*APPTS_PER_PAGE).map((appt,i)=>{
                             const a=appt as Appointment&{appointment_time?:string}
+                            const rowNum = (apptPage-1)*APPTS_PER_PAGE + i + 1
                             return (
                               <tr key={a.id} style={{borderBottom:'1px solid var(--border)', cursor:'pointer'}}
                                 onMouseEnter={e=>(e.currentTarget as HTMLTableRowElement).style.background='var(--bg-raised)'}
                                 onMouseLeave={e=>(e.currentTarget as HTMLTableRowElement).style.background=''}>
-                                <td style={{padding:'1rem 1.125rem', color:'var(--text-faint)', fontFamily:F_NUM, fontSize:'0.85rem'}}>{i+1}</td>
+                                <td style={{padding:'1rem 1.125rem', color:'var(--text-faint)', fontFamily:F_NUM, fontSize:'0.85rem'}}>{rowNum}</td>
                                 <td style={{padding:'1rem 1.125rem'}}>
                                   <p style={{fontWeight:600, color:'var(--text-primary)', fontSize:'0.95rem', fontFamily:F_BODY}}>{a.first_name} {a.last_name}</p>
                                   <p style={{fontSize:'0.8rem', color:'var(--text-faint)', marginTop:'2px', fontFamily:F_BODY}}>{(a as Record<string,unknown>).contact_number as string||a.address}</p>
@@ -905,26 +909,35 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                         </tbody>
                       </table>
                     </div>
-                    {/* ── Pagination footer ── */}
-                    <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.75rem 1.25rem', borderTop:'1px solid var(--border)', background:'var(--bg-raised)'}}>
-                      <p style={{fontFamily:F_MONO, fontSize:'0.63rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--text-faint)'}}>
-                        Showing {Math.min(visibleAppts, filtered.length)} of {filtered.length}
-                      </p>
-                      <div style={{display:'flex', gap:'6px'}}>
-                        {visibleAppts > 5 && (
-                          <button onClick={()=>setVisibleAppts(v=>Math.max(5,v-5))}
-                            style={{display:'flex', alignItems:'center', gap:'5px', padding:'0.35rem 0.875rem', borderRadius:'7px', fontFamily:F_BODY, fontSize:'0.82rem', fontWeight:500, cursor:'pointer', background:'var(--bg-surface)', border:'1px solid var(--border)', color:'var(--text-muted)'}}>
-                            <ChevronDown size={13} style={{transform:'rotate(180deg)'}}/> Show Less
-                          </button>
-                        )}
-                        {visibleAppts < filtered.length && (
-                          <button onClick={()=>setVisibleAppts(v=>v+5)}
-                            style={{display:'flex', alignItems:'center', gap:'5px', padding:'0.35rem 0.875rem', borderRadius:'7px', fontFamily:F_BODY, fontSize:'0.82rem', fontWeight:500, cursor:'pointer', background:'var(--gold-pale)', color:'var(--gold)', border:'1px solid var(--gold-border)'}}>
-                            Show More <ChevronDown size={13}/>
-                          </button>
-                        )}
-                      </div>
-                    </div>
+                    {/* ── Numbered Pagination footer ── */}
+                    {(()=>{
+                      const pages = Math.ceil(filtered.length / APPTS_PER_PAGE)
+                      const safePg = Math.min(apptPage, Math.max(1, pages))
+                      if (pages <= 1) return (
+                        <div style={{padding:'0.75rem 1.25rem', borderTop:'1px solid var(--border)', background:'var(--bg-raised)'}}>
+                          <p style={{fontFamily:F_MONO, fontSize:'0.63rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--text-faint)'}}>
+                            Showing {filtered.length} of {filtered.length}
+                          </p>
+                        </div>
+                      )
+                      return (
+                        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0.75rem 1.25rem', borderTop:'1px solid var(--border)', background:'var(--bg-raised)', flexWrap:'wrap', gap:'8px'}}>
+                          <p style={{fontFamily:F_MONO, fontSize:'0.63rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--text-faint)'}}>
+                            {((safePg-1)*APPTS_PER_PAGE)+1}–{Math.min(safePg*APPTS_PER_PAGE, filtered.length)} of {filtered.length}
+                          </p>
+                          <div style={{display:'flex', gap:'4px', alignItems:'center', flexWrap:'wrap'}}>
+                            <button onClick={()=>setApptPage(p=>Math.max(1,p-1))} disabled={safePg===1}
+                              style={{padding:'0.3rem 0.6rem', borderRadius:'6px', fontFamily:F_MONO, fontSize:'0.72rem', fontWeight:700, cursor:safePg===1?'not-allowed':'pointer', border:`1px solid ${safePg===1?'var(--border)':'var(--gold)'}`, background:'transparent', color:safePg===1?'var(--text-faint)':'var(--gold)', opacity:safePg===1?0.4:1}}>«</button>
+                            {Array.from({length:pages},(_,i)=>i+1).map(p=>(
+                              <button key={p} onClick={()=>setApptPage(p)}
+                                style={{width:'32px', height:'32px', borderRadius:'6px', fontFamily:F_MONO, fontSize:'0.75rem', fontWeight:700, cursor:'pointer', border:`1px solid ${safePg===p?'var(--gold)':'var(--border)'}`, background:safePg===p?'var(--gold)':'transparent', color:safePg===p?'#fff':'var(--text-muted)', transition:'all 0.15s'}}>{p}</button>
+                            ))}
+                            <button onClick={()=>setApptPage(p=>Math.min(pages,p+1))} disabled={safePg===pages}
+                              style={{padding:'0.3rem 0.65rem', borderRadius:'6px', fontFamily:F_MONO, fontSize:'0.72rem', fontWeight:700, cursor:safePg===pages?'not-allowed':'pointer', border:`1px solid ${safePg===pages?'var(--border)':'var(--gold)'}`, background:'transparent', color:safePg===pages?'var(--text-faint)':'var(--gold)', opacity:safePg===pages?0.4:1, letterSpacing:'0.04em'}}>NEXT »</button>
+                          </div>
+                        </div>
+                      )
+                    })()}
                   </div>
                 )}
               </>
@@ -1456,6 +1469,24 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                         ))}
                       </select>
                       <ChevronDown size={12} style={{position:'absolute', right:'8px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color:'var(--text-faint)'}}/>
+                    </div>
+                    {/* Invoice search */}
+                    <div style={{position:'relative'}}>
+                      <Search size={12} style={{position:'absolute', left:'9px', top:'50%', transform:'translateY(-50%)', color:'var(--text-faint)'}}/>
+                      <input
+                        type="text"
+                        placeholder="Search invoice no…"
+                        value={transSearch}
+                        onChange={e=>{ setTransSearch(e.target.value); setRevPage(1); setExpPage(1) }}
+                        className="input-luxury"
+                        style={{paddingLeft:'28px', paddingTop:'0.45rem', paddingBottom:'0.45rem', fontSize:'0.85rem', minWidth:'185px'}}
+                      />
+                      {transSearch && (
+                        <button type="button" onClick={()=>{ setTransSearch(''); setRevPage(1); setExpPage(1) }}
+                          style={{position:'absolute', right:'8px', top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--text-faint)', display:'flex', alignItems:'center'}}>
+                          <X size={12}/>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
