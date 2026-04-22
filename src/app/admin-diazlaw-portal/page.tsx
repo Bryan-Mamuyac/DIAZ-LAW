@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic'
 
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { supabase, Appointment, ContactMessage, FinancialRecord } from '@/lib/supabase'
+import { ISSUE_TYPES } from '@/lib/constants'
 import { useTheme } from '@/components/ThemeProvider'
 import * as XLSX from 'xlsx'
 import {
@@ -136,14 +137,14 @@ function CustomLineChart({ data, fmtPHP, isDark }: { data: ChartPoint[]; fmtPHP:
           return (
             <g key={i}>
               <line x1={PL} y1={y} x2={W-PR} y2={y} stroke={gc} strokeDasharray="4 3"/>
-              <text x={PL-8} y={y+4} textAnchor="end" fontSize={10} fill={tc} fontFamily="Inter,sans-serif">
+              <text x={PL-8} y={y+4} textAnchor="end" fontSize={12} fill={tc} fontFamily="Inter,sans-serif">
                 ₱{v>=1000?`${(v/1000).toFixed(0)}k`:'0'}
               </text>
             </g>
           )
         })}
         {data.map((d,i)=>(
-          <text key={i} x={px(i)} y={H-8} textAnchor="middle" fontSize={10} fill={tc} fontFamily="Inter,sans-serif">{d.month}</text>
+          <text key={i} x={px(i)} y={H-8} textAnchor="middle" fontSize={12} fill={tc} fontFamily="Inter,sans-serif">{d.month}</text>
         ))}
         {!single && <>
           <path d={lineD('revenue')} fill="none" stroke="#C9A84C" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"/>
@@ -153,10 +154,10 @@ function CustomLineChart({ data, fmtPHP, isDark }: { data: ChartPoint[]; fmtPHP:
           <g key={i}>
             <circle cx={px(i)} cy={py(d.revenue)} r={5} fill="#C9A84C" stroke={isDark?'#0C1120':'#fff'} strokeWidth={2}/>
             <circle cx={px(i)} cy={py(d.expense)}  r={5} fill="#E8707D" stroke={isDark?'#0C1120':'#fff'} strokeWidth={2}/>
-            <text x={px(i)} y={py(d.revenue)-10} textAnchor="middle" fontSize={9} fill="#C9A84C" fontFamily="Inter,sans-serif" fontWeight="600">
+            <text x={px(i)} y={py(d.revenue)-10} textAnchor="middle" fontSize={11} fill="#C9A84C" fontFamily="Inter,sans-serif" fontWeight="600">
               {d.revenue>=1000?`₱${(d.revenue/1000).toFixed(0)}k`:`₱${d.revenue}`}
             </text>
-            <text x={px(i)} y={py(d.expense)+18} textAnchor="middle" fontSize={9} fill="#E8707D" fontFamily="Inter,sans-serif" fontWeight="600">
+            <text x={px(i)} y={py(d.expense)+18} textAnchor="middle" fontSize={11} fill="#E8707D" fontFamily="Inter,sans-serif" fontWeight="600">
               {d.expense>=1000?`₱${(d.expense/1000).toFixed(0)}k`:`₱${d.expense}`}
             </text>
             <rect x={px(i)-24} y={PT} width={48} height={cH} fill="transparent"
@@ -213,14 +214,14 @@ function CustomBarChart({ data, fmtPHP, isDark }: { data: ChartPoint[]; fmtPHP: 
           return (
             <g key={i}>
               <line x1={PL} y1={y} x2={W-PR} y2={y} stroke={gc} strokeDasharray="4 3"/>
-              <text x={PL-8} y={y+4} textAnchor="end" fontSize={10} fill={tc} fontFamily="Inter,sans-serif">
+              <text x={PL-8} y={y+4} textAnchor="end" fontSize={12} fill={tc} fontFamily="Inter,sans-serif">
                 ₱{v>=1000?`${(v/1000).toFixed(0)}k`:'0'}
               </text>
             </g>
           )
         })}
         {data.map((d,i)=>(
-          <text key={i} x={PL + i*groupW + groupW/2} y={H-8} textAnchor="middle" fontSize={10} fill={tc} fontFamily="Inter,sans-serif">{d.month}</text>
+          <text key={i} x={PL + i*groupW + groupW/2} y={H-8} textAnchor="middle" fontSize={12} fill={tc} fontFamily="Inter,sans-serif">{d.month}</text>
         ))}
         {data.map((d,i)=>{
           const rh = Math.max(bh(d.revenue), d.revenue>0?4:0)
@@ -229,12 +230,12 @@ function CustomBarChart({ data, fmtPHP, isDark }: { data: ChartPoint[]; fmtPHP: 
             <g key={i}>
               <rect x={bx(i,0)} y={by(d.revenue)} width={barW} height={rh} fill="#C9A84C" rx={3}
                 opacity={tooltip && tooltip.i!==i ? 0.4 : 1}/>
-              {d.revenue > 0 && <text x={bx(i,0)+barW/2} y={by(d.revenue)-4} textAnchor="middle" fontSize={9} fill="#C9A84C" fontFamily="Inter,sans-serif" fontWeight="600">
+              {d.revenue > 0 && <text x={bx(i,0)+barW/2} y={by(d.revenue)-4} textAnchor="middle" fontSize={11} fill="#C9A84C" fontFamily="Inter,sans-serif" fontWeight="600">
                 {d.revenue>=1000?`₱${(d.revenue/1000).toFixed(0)}k`:`₱${d.revenue}`}
               </text>}
               <rect x={bx(i,1)} y={by(d.expense)} width={barW} height={eh} fill="#E8707D" rx={3}
                 opacity={tooltip && tooltip.i!==i ? 0.4 : 1}/>
-              {d.expense > 0 && <text x={bx(i,1)+barW/2} y={by(d.expense)-4} textAnchor="middle" fontSize={9} fill="#E8707D" fontFamily="Inter,sans-serif" fontWeight="600">
+              {d.expense > 0 && <text x={bx(i,1)+barW/2} y={by(d.expense)-4} textAnchor="middle" fontSize={11} fill="#E8707D" fontFamily="Inter,sans-serif" fontWeight="600">
                 {d.expense>=1000?`₱${(d.expense/1000).toFixed(0)}k`:`₱${d.expense}`}
               </text>}
               <rect x={PL + i*groupW} y={PT} width={groupW} height={cH} fill="transparent"
@@ -473,6 +474,9 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
   const [showConfirm,  setShowConfirm]  = useState(false)
   const [finLoading,   setFinLoading]   = useState(false)
   const [clientMode,   setClientMode]   = useState<'dropdown'|'manual'>('dropdown')
+  const [issueManual,  setIssueManual]  = useState(false)
+
+  const ISSUE_GROUPS = Array.from(new Set(ISSUE_TYPES.map(i => i.group)))
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -1265,6 +1269,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                               onClick={()=>{
                                 setFinForm(p=>({...p, appointment_type:t, client_name:'', client_issue:''}))
                                 setClientMode(t==='Online' ? 'dropdown' : 'manual')
+                                setIssueManual(false)
                               }}
                               style={{flex:1, padding:'0.65rem', borderRadius:'8px', fontFamily:F_MONO, fontSize:'0.72rem', fontWeight:600, letterSpacing:'0.08em', textTransform:'uppercase', cursor:'pointer', transition:'all 0.15s',
                                 background: finForm.appointment_type===t
@@ -1307,7 +1312,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                             <ChevronDown size={13} style={{position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color:'var(--text-faint)'}}/>
                           </div>
                         ) : (
-                          <input type="text" placeholder="Enter client full name…"
+                          <input type="text" placeholder="e.g. Juan Dela Cruz"
                             value={finForm.client_name}
                             onChange={e=>setFinForm(p=>({...p, client_name:e.target.value}))}
                             className="input-luxury" style={{fontSize:'0.95rem'}}/>
@@ -1320,10 +1325,38 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                           <input type="text" value={finForm.client_issue} readOnly placeholder="Auto-filled from appointment…"
                             className="input-luxury" style={{fontSize:'0.95rem', opacity: finForm.client_issue?1:0.6, cursor:'default'}}/>
                         ) : (
-                          <input type="text" placeholder="e.g. Property Dispute, Notarization…"
-                            value={finForm.client_issue}
-                            onChange={e=>setFinForm(p=>({...p, client_issue:e.target.value}))}
-                            className="input-luxury" style={{fontSize:'0.95rem'}}/>
+                          <div>
+                            {!issueManual ? (
+                              <div style={{position:'relative'}}>
+                                <select
+                                  value={finForm.client_issue}
+                                  onChange={e => setFinForm(p=>({...p, client_issue: e.target.value}))}
+                                  className="input-luxury"
+                                  style={{fontSize:'0.95rem', paddingRight:'2.25rem', appearance:'none', cursor:'pointer', width:'100%'}}
+                                >
+                                  <option value="">— Select issue type —</option>
+                                  {ISSUE_GROUPS.map(g => (
+                                    <optgroup key={g} label={g}>
+                                      {ISSUE_TYPES.filter(i => i.group === g).map(item => (
+                                        <option key={item.label} value={item.label}>{item.label}</option>
+                                      ))}
+                                    </optgroup>
+                                  ))}
+                                </select>
+                                <ChevronDown size={13} style={{position:'absolute', right:'10px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color:'var(--text-faint)'}}/>
+                              </div>
+                            ) : (
+                              <input type="text" placeholder="e.g. Property Dispute, Notarization…"
+                                value={finForm.client_issue}
+                                onChange={e=>setFinForm(p=>({...p, client_issue:e.target.value}))}
+                                className="input-luxury" style={{fontSize:'0.95rem'}}/>
+                            )}
+                            <button type="button"
+                              onClick={() => { setIssueManual(v => !v); setFinForm(p=>({...p, client_issue:''})) }}
+                              style={{marginTop:'5px', background:'none', border:'none', cursor:'pointer', fontFamily:F_MONO, fontSize:'0.62rem', letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--gold)', textDecoration:'underline', padding:0}}>
+                              {issueManual ? '← Back to dropdown' : '✎ Type manually instead'}
+                            </button>
+                          </div>
                         )}
                       </div>
                     </>
