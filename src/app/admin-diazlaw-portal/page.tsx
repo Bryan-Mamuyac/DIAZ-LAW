@@ -449,13 +449,13 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
   const [calModal,      setCalModal]      = useState<{ date: string; appts: Appointment[] } | null>(null)
 
   // Chart filter — shared for both Line and Bar
-  type ChartRange = '5d' | '2w' | '3w' | 'month'
+  type ChartRange = 'overall' | '1w' | '2w' | '3w' | 'month'
   const currentMonthISO = () => new Date().toISOString().slice(0, 7)
-  const [chartRange, setChartRange] = useState<ChartRange>('5d')
+  const [chartRange, setChartRange] = useState<ChartRange>('overall')
   const [chartMonth, setChartMonth] = useState<string>(currentMonthISO())
 
   // Financial filters
-  const [finTypeFilter,  setFinTypeFilter]  = useState<'all'|'revenue'|'expense'>('all')
+  const [finTypeFilter,  setFinTypeFilter]  = useState<'revenue'|'expense'>('revenue')
   const [finMonthFilter, setFinMonthFilter] = useState<string>('all')
 
   // Financial form
@@ -463,6 +463,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
     record_date: todayISO(), type: 'revenue' as 'revenue'|'expense',
     amount: '', description: '',
     invoice_number: '', client_name: '', client_issue: '', payment_method: 'Cash',
+    appointment_type: 'Walk-in' as 'Online'|'Walk-in',
   })
   const [showConfirm,  setShowConfirm]  = useState(false)
   const [finLoading,   setFinLoading]   = useState(false)
@@ -510,7 +511,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
 
   const filteredRecords = useMemo(() => {
     return records.filter(r => {
-      const typeOk  = finTypeFilter==='all' || r.type===finTypeFilter
+      const typeOk  = r.type===finTypeFilter
       const monthOk = finMonthFilter==='all' || r.record_date.slice(0,7)===finMonthFilter
       return typeOk && monthOk
     })
@@ -538,8 +539,8 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
 
   const buildChartData = useCallback((range: ChartRange, month: string) => {
     let allowedDates: Set<string> | null = null
-    if (range !== 'month') {
-      const n = range === '5d' ? 5 : range === '2w' ? 10 : 15
+    if (range !== 'month' && range !== 'overall') {
+      const n = range === '1w' ? 5 : range === '2w' ? 10 : 15
       allowedDates = new Set(getWorkingDays(n))
     }
     const days: Record<string, {month: string; revenue: number; expense: number}> = {}
@@ -547,7 +548,9 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
       const d = r.record_date
       if (range === 'month' && d.slice(0, 7) !== month) return
       if (allowedDates && !allowedDates.has(d)) return
-      const label = format(parseISO(d), 'MMM d')
+      const label = range === 'month' || range === 'overall'
+        ? format(parseISO(d), 'MMM d')
+        : format(parseISO(d), 'MMM d')
       if (!days[d]) days[d] = {month: label, revenue: 0, expense: 0}
       if (r.type === 'revenue') days[d].revenue += r.amount
       else days[d].expense += r.amount
@@ -607,21 +610,22 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
   const saveFinancial = async () => {
     setFinLoading(true)
     const rec = {
-      record_date:    finForm.record_date,
-      type:           finForm.type,
-      category:       '',
-      amount:         Math.round(parseFloat(finForm.amount) * 100) / 100,
-      description:    finForm.description,
-      invoice_number: finForm.invoice_number||null,
-      client_name:    finForm.type==='revenue'?(finForm.client_name||null):null,
-      client_issue:   finForm.type==='revenue'?(finForm.client_issue||null):null,
-      payment_method: finForm.payment_method,
+      record_date:      finForm.record_date,
+      type:             finForm.type,
+      category:         '',
+      amount:           Math.round(parseFloat(finForm.amount) * 100) / 100,
+      description:      finForm.description || '',
+      invoice_number:   finForm.invoice_number||null,
+      client_name:      finForm.type==='revenue'?(finForm.client_name||null):null,
+      client_issue:     finForm.type==='revenue'?(finForm.client_issue||null):null,
+      payment_method:   finForm.payment_method,
+      appointment_type: finForm.type==='revenue'?finForm.appointment_type:null,
     }
     const { error } = await supabase.from('financial_records').insert([rec])
     if (!error) {
       toast.success('Record saved!')
       const nextCount = records.length + 1
-      setFinForm({ record_date:todayISO(), type:'revenue', amount:'', description:'', invoice_number:generateInvoice(nextCount), client_name:'', client_issue:'', payment_method:'Cash' })
+      setFinForm({ record_date:todayISO(), type:'revenue', amount:'', description:'', invoice_number:generateInvoice(nextCount), client_name:'', client_issue:'', payment_method:'Cash', appointment_type:'Walk-in' })
       setShowConfirm(false)
       fetchAll()
     } else { toast.error('Failed to save.') }
@@ -639,24 +643,31 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
       ? format(parseISO(finMonthFilter+'-01'), 'MMMM').toLowerCase()
       : null
     const suffix = monthName ? `${monthName}${year}` : year
+    const filename = finTypeFilter === 'revenue' ? `revenue_${suffix}.xlsx` : `expense_${suffix}.xlsx`
 
-    let filename: string
-    if (finTypeFilter === 'revenue')      filename = `revenue_${suffix}.xlsx`
-    else if (finTypeFilter === 'expense') filename = `expense_${suffix}.xlsx`
-    else                                  filename = `revenue_expense_all_${suffix}.xlsx`
-    if (finMonthFilter !== 'all' && finTypeFilter === 'all')
-      filename = `revenue_expense_${suffix}.xlsx`
+    const REV_HEADERS = ['Date','Type','Amount','Invoice','Appt Type','Client','Issue','Payment','Description']
+    const EXP_HEADERS = ['Date','Type','Amount','Payment','Description']
 
-    const HEADERS = ['Date','Type','Amount','Invoice','Client','Issue','Payment','Description']
-    const toRow = (rec: FinancialRecord) => {
+    const toRevRow = (rec: FinancialRecord) => {
       const x = rec as Record<string,unknown>
       return {
         Date:        rec.record_date,
         Type:        rec.type,
         Amount:      rec.amount,
         Invoice:     (x.invoice_number as string)||'',
+        'Appt Type': (x.appointment_type as string)||'',
         Client:      (x.client_name as string)||'',
         Issue:       (x.client_issue as string)||'',
+        Payment:     (x.payment_method as string)||'',
+        Description: rec.description,
+      }
+    }
+    const toExpRow = (rec: FinancialRecord) => {
+      const x = rec as Record<string,unknown>
+      return {
+        Date:        rec.record_date,
+        Type:        rec.type,
+        Amount:      rec.amount,
         Payment:     (x.payment_method as string)||'',
         Description: rec.description,
       }
@@ -669,37 +680,24 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
 
     const wb = XLSX.utils.book_new()
 
-    if (finTypeFilter !== 'expense') {
-      const revRows = revenues.map(toRow)
-      const revSheet = XLSX.utils.json_to_sheet(revRows, {header: HEADERS})
+    if (finTypeFilter === 'revenue') {
+      const revRows = revenues.map(toRevRow)
+      const revSheet = XLSX.utils.json_to_sheet(revRows, {header: REV_HEADERS})
       XLSX.utils.sheet_add_aoa(revSheet, [
-        ['','','','','','','',''],
-        ['TOTAL REVENUE','', totalRev,'','','','',''],
+        ['','','','','','','','',''],
+        ['TOTAL REVENUE','', totalRev,'','','','','',''],
       ], {origin: revRows.length + 1})
-      revSheet['!cols'] = [{wch:14},{wch:10},{wch:14},{wch:16},{wch:20},{wch:18},{wch:12},{wch:24}]
+      revSheet['!cols'] = [{wch:14},{wch:10},{wch:14},{wch:14},{wch:12},{wch:20},{wch:18},{wch:12},{wch:24}]
       XLSX.utils.book_append_sheet(wb, revSheet, 'Revenue')
-    }
-
-    if (finTypeFilter !== 'revenue') {
-      const expRows = expenses.map(toRow)
-      const expSheet = XLSX.utils.json_to_sheet(expRows, {header: HEADERS})
+    } else {
+      const expRows = expenses.map(toExpRow)
+      const expSheet = XLSX.utils.json_to_sheet(expRows, {header: EXP_HEADERS})
       XLSX.utils.sheet_add_aoa(expSheet, [
-        ['','','','','','','',''],
-        ['TOTAL EXPENSE','', totalExp,'','','','',''],
+        ['','','','',''],
+        ['TOTAL EXPENSE','', totalExp,'',''],
       ], {origin: expRows.length + 1})
-      expSheet['!cols'] = [{wch:14},{wch:10},{wch:14},{wch:16},{wch:20},{wch:18},{wch:12},{wch:24}]
+      expSheet['!cols'] = [{wch:14},{wch:10},{wch:14},{wch:12},{wch:24}]
       XLSX.utils.book_append_sheet(wb, expSheet, 'Expense')
-    }
-
-    if (finTypeFilter === 'all') {
-      const summaryData = [
-        {Label:'Total Revenue', Amount: totalRev},
-        {Label:'Total Expense', Amount: totalExp},
-        {Label:'Net Income',    Amount: totalRev - totalExp},
-      ]
-      const sumSheet = XLSX.utils.json_to_sheet(summaryData)
-      sumSheet['!cols'] = [{wch:20},{wch:16}]
-      XLSX.utils.book_append_sheet(wb, sumSheet, 'Summary')
     }
 
     XLSX.writeFile(wb, filename)
@@ -1140,29 +1138,39 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
             {/* Charts — shared filter */}
             <div style={{...CARD, padding:'1.25rem 1.5rem', marginBottom:'1.25rem', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:'0.75rem'}}>
               <p style={{fontFamily:F_MONO, fontSize:'0.75rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'var(--gold)', fontWeight:700}}>Chart Filter</p>
-              <div style={{display:'flex', gap:'6px', flexWrap:'wrap', alignItems:'center'}}>
-                {/* Range buttons */}
-                {([['5d','Last 5 Days'],['2w','Last 2 Weeks'],['3w','Last 3 Weeks']] as [ChartRange,string][]).map(([v,label])=>(
-                  <button key={v} onClick={()=>setChartRange(v)}
-                    style={{padding:'0.35rem 0.75rem', borderRadius:'7px', fontFamily:F_MONO, fontSize:'0.65rem', letterSpacing:'0.08em', textTransform:'uppercase', fontWeight:600, cursor:'pointer', transition:'all 0.15s',
-                      background: chartRange===v ? 'var(--gold)' : 'var(--bg-raised)',
-                      color:      chartRange===v ? '#fff'        : 'var(--text-muted)',
-                      border:`1px solid ${chartRange===v ? 'var(--gold)' : 'var(--border)'}`,
-                    }}>{label}</button>
-                ))}
-                {/* Divider */}
-                <div style={{width:'1px', height:'20px', background:'var(--border)', margin:'0 4px'}}/>
-                {/* Month button */}
-                <button onClick={()=>setChartRange('month')}
-                  style={{padding:'0.35rem 0.75rem', borderRadius:'7px', fontFamily:F_MONO, fontSize:'0.65rem', letterSpacing:'0.08em', textTransform:'uppercase', fontWeight:600, cursor:'pointer', transition:'all 0.15s',
-                    background: chartRange==='month' ? 'var(--gold)' : 'var(--bg-raised)',
-                    color:      chartRange==='month' ? '#fff'        : 'var(--text-muted)',
-                    border:`1px solid ${chartRange==='month' ? 'var(--gold)' : 'var(--border)'}`,
-                  }}>By Month</button>
+              <div style={{display:'flex', gap:'8px', flexWrap:'wrap', alignItems:'center'}}>
+                {/* Range dropdown */}
+                <div style={{position:'relative'}}>
+                  <select value={chartRange}
+                    onChange={e => {
+                      const v = e.target.value as ChartRange
+                      setChartRange(v)
+                      // Sync transaction history date filter
+                      if (v === 'overall') {
+                        setFinMonthFilter('all')
+                      } else if (v === 'month') {
+                        setFinMonthFilter(chartMonth)
+                      } else {
+                        setFinMonthFilter('all')
+                      }
+                    }}
+                    className="input-luxury"
+                    style={{paddingTop:'0.35rem', paddingBottom:'0.35rem', paddingRight:'2rem', paddingLeft:'0.75rem', fontSize:'0.8rem', appearance:'none', cursor:'pointer', minWidth:'160px', fontFamily:F_MONO, letterSpacing:'0.06em', textTransform:'uppercase', fontWeight:600}}>
+                    <option value="overall">Overall (All Time)</option>
+                    <option value="1w">Last 1 Week</option>
+                    <option value="2w">Last 2 Weeks</option>
+                    <option value="3w">Last 3 Weeks</option>
+                    <option value="month">By Month</option>
+                  </select>
+                  <ChevronDown size={12} style={{position:'absolute', right:'8px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color:'var(--text-faint)'}}/>
+                </div>
                 {/* Month selector — only shown when month mode */}
                 {chartRange==='month' && (
                   <div style={{position:'relative'}}>
-                    <select value={chartMonth} onChange={e=>setChartMonth(e.target.value)}
+                    <select value={chartMonth} onChange={e => {
+                      setChartMonth(e.target.value)
+                      setFinMonthFilter(e.target.value)
+                    }}
                       className="input-luxury" style={{paddingTop:'0.35rem', paddingBottom:'0.35rem', paddingRight:'2rem', paddingLeft:'0.75rem', fontSize:'0.8rem', appearance:'none', cursor:'pointer', minWidth:'140px'}}>
                       {monthOptions.length===0
                         ? <option value={chartMonth}>{format(parseISO(chartMonth+'-01'),'MMMM yyyy')}</option>
@@ -1233,7 +1241,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                     <div style={{display:'flex', gap:'8px'}}>
                       {(['revenue','expense'] as const).map(t=>(
                         <button key={t} type="button"
-                          onClick={()=>{setFinForm(p=>({...p,type:t,client_name:'',client_issue:''})); setClientMode('dropdown')}}
+                          onClick={()=>{setFinForm(p=>({...p,type:t,client_name:'',client_issue:'',appointment_type:'Walk-in'})); setClientMode('dropdown')}}
                           style={{flex:1, padding:'0.65rem', borderRadius:'8px', fontFamily:F_MONO, fontSize:'0.72rem', fontWeight:600, letterSpacing:'0.08em', textTransform:'uppercase', cursor:'pointer', transition:'all 0.15s', background:finForm.type===t?(t==='revenue'?'rgba(22,163,74,0.15)':'rgba(232,112,125,0.14)'):'var(--bg-raised)', color:finForm.type===t?(t==='revenue'?'#16A34A':'#DC2626'):'var(--text-muted)', border:`1px solid ${finForm.type===t?(t==='revenue'?'rgba(22,163,74,0.3)':'rgba(232,112,125,0.35)'):'var(--border)'}`}}>
                           {t}
                         </button>
@@ -1302,6 +1310,32 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                     </>
                   )}
 
+                  {/* Appointment Type — Revenue only */}
+                  {finForm.type==='revenue'&&(
+                    <div>
+                      <label style={LBL}>Appointment Type</label>
+                      <div style={{display:'flex', gap:'8px'}}>
+                        {(['Online','Walk-in'] as const).map(t=>(
+                          <button key={t} type="button"
+                            onClick={()=>setFinForm(p=>({...p,appointment_type:t}))}
+                            style={{flex:1, padding:'0.65rem', borderRadius:'8px', fontFamily:F_MONO, fontSize:'0.72rem', fontWeight:600, letterSpacing:'0.08em', textTransform:'uppercase', cursor:'pointer', transition:'all 0.15s',
+                              background: finForm.appointment_type===t
+                                ? (t==='Online' ? 'rgba(59,130,246,0.15)' : 'rgba(201,168,76,0.15)')
+                                : 'var(--bg-raised)',
+                              color: finForm.appointment_type===t
+                                ? (t==='Online' ? '#1D4ED8' : '#B8922A')
+                                : 'var(--text-muted)',
+                              border: `1px solid ${finForm.appointment_type===t
+                                ? (t==='Online' ? 'rgba(59,130,246,0.3)' : 'rgba(201,168,76,0.3)')
+                                : 'var(--border)'}`,
+                            }}>
+                            {t==='Online' ? '🌐 Online' : '🚶 Walk-in'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Amount */}
                   <div>
                     <label style={LBL}>Amount (₱)</label>
@@ -1339,7 +1373,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                   </div>
 
                   <button onClick={()=>{
-                    if (!finForm.record_date||!finForm.amount||!finForm.description) { toast.error('Please fill in all required fields.'); return }
+                    if (!finForm.record_date||!finForm.amount) { toast.error('Please fill in date and amount.'); return }
                     setShowConfirm(true)
                   }} className="btn-gold" style={{width:'100%', justifyContent:'center', fontSize:'0.9rem', padding:'0.85rem', marginTop:'0.25rem'}}>
                     <Plus size={15}/> Review & Save
@@ -1366,17 +1400,26 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                   <div style={{display:'flex', gap:'8px', flexWrap:'wrap'}}>
                     <div style={{position:'relative'}}>
                       <Filter size={12} style={{position:'absolute', left:'9px', top:'50%', transform:'translateY(-50%)', color:'var(--text-faint)'}}/>
-                      <select value={finTypeFilter} onChange={e=>setFinTypeFilter(e.target.value as 'all'|'revenue'|'expense')}
+                      <select value={finTypeFilter} onChange={e=>setFinTypeFilter(e.target.value as 'revenue'|'expense')}
                         className="input-luxury" style={{paddingLeft:'28px', paddingTop:'0.45rem', paddingBottom:'0.45rem', fontSize:'0.85rem', paddingRight:'2rem', appearance:'none', cursor:'pointer', minWidth:'145px'}}>
-                        <option value="all">All Types</option>
-                        <option value="revenue">Revenue Only</option>
-                        <option value="expense">Expense Only</option>
+                        <option value="revenue">Revenue</option>
+                        <option value="expense">Expense</option>
                       </select>
                       <ChevronDown size={12} style={{position:'absolute', right:'8px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color:'var(--text-faint)'}}/>
                     </div>
                     <div style={{position:'relative'}}>
                       <Calendar size={12} style={{position:'absolute', left:'9px', top:'50%', transform:'translateY(-50%)', color:'var(--text-faint)'}}/>
-                      <select value={finMonthFilter} onChange={e=>setFinMonthFilter(e.target.value)}
+                      <select value={finMonthFilter} onChange={e => {
+                        const v = e.target.value
+                        setFinMonthFilter(v)
+                        // Sync chart filter
+                        if (v === 'all') {
+                          setChartRange('overall')
+                        } else {
+                          setChartRange('month')
+                          setChartMonth(v)
+                        }
+                      }}
                         className="input-luxury" style={{paddingLeft:'28px', paddingTop:'0.45rem', paddingBottom:'0.45rem', fontSize:'0.85rem', paddingRight:'2rem', appearance:'none', cursor:'pointer', minWidth:'175px'}}>
                         <option value="all">All Months</option>
                         {monthOptions.map(m=>(
@@ -1385,17 +1428,11 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                       </select>
                       <ChevronDown size={12} style={{position:'absolute', right:'8px', top:'50%', transform:'translateY(-50%)', pointerEvents:'none', color:'var(--text-faint)'}}/>
                     </div>
-                    {(finTypeFilter!=='all'||finMonthFilter!=='all')&&(
-                      <button onClick={()=>{setFinTypeFilter('all');setFinMonthFilter('all')}}
-                        style={{padding:'0.45rem 0.875rem', borderRadius:'8px', fontFamily:F_BODY, fontSize:'0.82rem', cursor:'pointer', background:'var(--bg-raised)', border:'1px solid var(--border)', color:'var(--text-muted)'}}>
-                        Clear filters
-                      </button>
-                    )}
                   </div>
                 </div>
 
                 {/* ── Scrollable tables area ── */}
-                <div style={{overflowY:'auto', flex:1, maxHeight:'calc(100vh - 320px)'}}>
+                <div style={{overflowY:'auto', flex:1, minHeight:0}}>
                   {filteredRecords.length===0 ? (
                     <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.95rem', padding:'3.5rem', fontFamily:F_BODY}}>No records found</p>
                   ) : (()=>{
@@ -1404,32 +1441,41 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                     const totalRev = revenues.reduce((s,r)=>s+r.amount,0)
                     const totalExp = expenses.reduce((s,r)=>s+r.amount,0)
 
-                    // Revenue-only columns: Date, Amount, Invoice, Client, Issue, Payment, Description
-                    // Expense-only columns: Date, Amount, Payment, Description
+                    // Revenue columns: Date, Amount, Appt Type, Invoice, Client, Issue, Payment
+                    // Expense columns: Date, Amount, Payment
                     const RevTable = ({rows}: {rows: FinancialRecord[]}) => (
                       <div style={{overflowX:'auto'}}>
-                        <table style={{width:'100%', minWidth:'680px', borderCollapse:'collapse'}}>
+                        <table style={{width:'100%', minWidth:'700px', borderCollapse:'collapse'}}>
                           <thead style={{position:'sticky', top:0, zIndex:1}}>
                             <tr style={{background:'rgba(22,163,74,0.08)', borderBottom:'2px solid rgba(22,163,74,0.2)'}}>
-                              {['Date','Amount','Invoice','Client','Issue','Payment','Description'].map(h=>(
+                              {['Date','Amount','Appt Type','Invoice','Client','Issue','Payment'].map(h=>(
                                 <th key={h} style={{textAlign:'left', padding:'0.7rem 1rem', fontFamily:F_MONO, fontSize:'0.68rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'#15803D', fontWeight:700, whiteSpace:'nowrap'}}>{h}</th>
                               ))}
                             </tr>
                           </thead>
                           <tbody>
                             {rows.map(r=>{
-                              const x=r as FinancialRecord&{invoice_number?:string;client_name?:string;client_issue?:string;payment_method?:string}
+                              const x=r as FinancialRecord&{invoice_number?:string;client_name?:string;client_issue?:string;payment_method?:string;appointment_type?:string}
+                              const apptType = x.appointment_type || (x.client_name ? 'Walk-in' : '—')
                               return (
                                 <tr key={r.id} style={{borderBottom:'1px solid var(--border)'}}
                                   onMouseEnter={e=>(e.currentTarget as HTMLTableRowElement).style.background='rgba(22,163,74,0.04)'}
                                   onMouseLeave={e=>(e.currentTarget as HTMLTableRowElement).style.background=''}>
                                   <td style={{padding:'0.8rem 1rem', fontFamily:F_NUM, fontSize:'0.88rem', color:'var(--text-secondary)', whiteSpace:'nowrap'}}>{format(parseISO(r.record_date),'MMM d, yyyy')}</td>
                                   <td style={{padding:'0.8rem 1rem', fontFamily:F_NUM, fontSize:'0.9rem', fontWeight:600, color:'#16A34A', whiteSpace:'nowrap'}}>{fmtPHP(r.amount)}</td>
+                                  <td style={{padding:'0.8rem 1rem'}}>
+                                    <span style={{
+                                      fontFamily:F_MONO, fontSize:'0.68rem', fontWeight:600, letterSpacing:'0.06em', textTransform:'uppercase',
+                                      padding:'0.2rem 0.6rem', borderRadius:'5px', whiteSpace:'nowrap',
+                                      background: apptType==='Online' ? 'rgba(59,130,246,0.1)' : apptType==='Walk-in' ? 'rgba(201,168,76,0.12)' : 'var(--bg-raised)',
+                                      color:      apptType==='Online' ? '#1D4ED8'              : apptType==='Walk-in' ? '#B8922A'                : 'var(--text-faint)',
+                                      border:     apptType==='Online' ? '1px solid rgba(59,130,246,0.25)' : apptType==='Walk-in' ? '1px solid rgba(201,168,76,0.3)' : '1px solid var(--border)',
+                                    }}>{apptType}</span>
+                                  </td>
                                   <td style={{padding:'0.8rem 1rem', fontFamily:F_MONO, fontSize:'0.8rem', color:'var(--text-muted)'}}>{x.invoice_number||'—'}</td>
                                   <td style={{padding:'0.8rem 1rem', fontFamily:F_BODY, fontSize:'0.88rem', color:'var(--text-secondary)'}}>{x.client_name||'—'}</td>
                                   <td style={{padding:'0.8rem 1rem', fontFamily:F_BODY, fontSize:'0.85rem', color:'var(--text-muted)', maxWidth:'130px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{x.client_issue||'—'}</td>
                                   <td style={{padding:'0.8rem 1rem', fontFamily:F_BODY, fontSize:'0.85rem', color:'var(--text-muted)'}}>{x.payment_method||'—'}</td>
-                                  <td style={{padding:'0.8rem 1rem', fontFamily:F_BODY, fontSize:'0.85rem', color:'var(--text-muted)', minWidth:'130px', maxWidth:'200px', whiteSpace:'normal', wordBreak:'break-word', lineHeight:1.5}}>{r.description}</td>
                                 </tr>
                               )
                             })}
@@ -1447,10 +1493,10 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
 
                     const ExpTable = ({rows}: {rows: FinancialRecord[]}) => (
                       <div style={{overflowX:'auto'}}>
-                        <table style={{width:'100%', minWidth:'520px', borderCollapse:'collapse'}}>
+                        <table style={{width:'100%', minWidth:'400px', borderCollapse:'collapse'}}>
                           <thead style={{position:'sticky', top:0, zIndex:1}}>
                             <tr style={{background:'rgba(232,112,125,0.08)', borderBottom:'2px solid rgba(232,112,125,0.2)'}}>
-                              {['Date','Amount','Payment','Description'].map(h=>(
+                              {['Date','Amount','Payment'].map(h=>(
                                 <th key={h} style={{textAlign:'left', padding:'0.7rem 1rem', fontFamily:F_MONO, fontSize:'0.68rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'#B91C1C', fontWeight:700, whiteSpace:'nowrap'}}>{h}</th>
                               ))}
                             </tr>
@@ -1465,7 +1511,6 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                                   <td style={{padding:'0.8rem 1rem', fontFamily:F_NUM, fontSize:'0.88rem', color:'var(--text-secondary)', whiteSpace:'nowrap'}}>{format(parseISO(r.record_date),'MMM d, yyyy')}</td>
                                   <td style={{padding:'0.8rem 1rem', fontFamily:F_NUM, fontSize:'0.9rem', fontWeight:600, color:'#DC2626', whiteSpace:'nowrap'}}>{fmtPHP(r.amount)}</td>
                                   <td style={{padding:'0.8rem 1rem', fontFamily:F_BODY, fontSize:'0.85rem', color:'var(--text-muted)'}}>{x.payment_method||'—'}</td>
-                                  <td style={{padding:'0.8rem 1rem', fontFamily:F_BODY, fontSize:'0.85rem', color:'var(--text-muted)', minWidth:'130px', maxWidth:'260px', whiteSpace:'normal', wordBreak:'break-word', lineHeight:1.5}}>{r.description}</td>
                                 </tr>
                               )
                             })}
@@ -1474,7 +1519,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                             <tr style={{background:'rgba(232,112,125,0.06)', borderTop:'2px solid rgba(232,112,125,0.2)'}}>
                               <td style={{padding:'0.75rem 1rem', fontFamily:F_MONO, fontSize:'0.72rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'#B91C1C', fontWeight:700}}>Total</td>
                               <td style={{padding:'0.75rem 1rem', fontFamily:F_NUM, fontSize:'0.95rem', fontWeight:800, color:'#DC2626'}}>{fmtPHP(totalExp)}</td>
-                              <td colSpan={2}/>
+                              <td/>
                             </tr>
                           </tfoot>
                         </table>
@@ -1484,7 +1529,7 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                     return (
                       <>
                         {/* ── REVENUE TABLE ── */}
-                        {(finTypeFilter==='all'||finTypeFilter==='revenue') && revenues.length > 0 && (
+                        {finTypeFilter==='revenue' && revenues.length > 0 && (
                           <div>
                             <div style={{display:'flex', alignItems:'center', gap:'8px', padding:'0.75rem 1rem', background:'rgba(22,163,74,0.06)', borderBottom:'1px solid rgba(22,163,74,0.15)'}}>
                               <TrendingUp size={13} style={{color:'#16A34A', flexShrink:0}}/>
@@ -1493,26 +1538,21 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                             <RevTable rows={revenues}/>
                           </div>
                         )}
-                        {(finTypeFilter==='all'||finTypeFilter==='revenue') && revenues.length===0 && (
+                        {finTypeFilter==='revenue' && revenues.length===0 && (
                           <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.88rem', padding:'2rem', fontFamily:F_BODY}}>No revenue records</p>
                         )}
 
-                        {/* ── DIVIDER ── */}
-                        {finTypeFilter==='all' && revenues.length>0 && expenses.length>0 && (
-                          <div style={{height:'1px', background:'var(--border)', margin:'0'}}/>
-                        )}
-
                         {/* ── EXPENSE TABLE ── */}
-                        {(finTypeFilter==='all'||finTypeFilter==='expense') && expenses.length > 0 && (
+                        {finTypeFilter==='expense' && expenses.length > 0 && (
                           <div>
-                            <div style={{display:'flex', alignItems:'center', gap:'8px', padding:'0.75rem 1rem', background:'rgba(232,112,125,0.06)', borderBottom:'1px solid rgba(232,112,125,0.15)', borderTop: finTypeFilter==='all' && revenues.length>0 ? '1px solid rgba(232,112,125,0.15)' : 'none'}}>
+                            <div style={{display:'flex', alignItems:'center', gap:'8px', padding:'0.75rem 1rem', background:'rgba(232,112,125,0.06)', borderBottom:'1px solid rgba(232,112,125,0.15)'}}>
                               <TrendingDown size={13} style={{color:'#DC2626', flexShrink:0}}/>
                               <span style={{fontFamily:F_MONO, fontSize:'0.68rem', letterSpacing:'0.12em', textTransform:'uppercase', color:'#DC2626', fontWeight:700}}>Expense — {expenses.length} record{expenses.length!==1?'s':''}</span>
                             </div>
                             <ExpTable rows={expenses}/>
                           </div>
                         )}
-                        {(finTypeFilter==='all'||finTypeFilter==='expense') && expenses.length===0 && (
+                        {finTypeFilter==='expense' && expenses.length===0 && (
                           <p style={{textAlign:'center', color:'var(--text-faint)', fontSize:'0.88rem', padding:'2rem', fontFamily:F_BODY}}>No expense records</p>
                         )}
                       </>
@@ -1701,9 +1741,13 @@ function AdminDashboard({ onLock }: { onLock: () => void }) {
                   ['Type',       finForm.type.toUpperCase()],
                   ['Amount',     `₱${parseFloat(finForm.amount||'0').toLocaleString('en-PH',{minimumFractionDigits:2})}`],
                   ['Invoice No.',finForm.invoice_number||'—'],
-                  ...(finForm.type==='revenue'?[['Client',finForm.client_name||'—'],['Issue',finForm.client_issue||'—']]:[]),
+                  ...(finForm.type==='revenue'?[
+                    ['Appt Type', finForm.appointment_type],
+                    ['Client',finForm.client_name||'—'],
+                    ['Issue',finForm.client_issue||'—'],
+                  ]:[]),
                   ['Payment',    finForm.payment_method],
-                  ['Description',finForm.description],
+                  ...(finForm.description?[['Description',finForm.description]]:[]),
                 ].map(([l,v])=>(
                   <div key={l} style={{display:'flex', justifyContent:'space-between', gap:'1rem', alignItems:'flex-start'}}>
                     <span style={{fontFamily:F_MONO, fontSize:'0.67rem', letterSpacing:'0.1em', textTransform:'uppercase', color:'var(--text-muted)', flexShrink:0}}>{l}</span>
